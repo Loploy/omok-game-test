@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wave Omok</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --paper: #f7f5ef;
+    --rule: #d7d9e6;
+    --ink: #2c3968;
+    --ink-soft: #5b699a;
+    --black-stone: #17181c;
+    --white-stone: #fbfbf8;
+    --accent: #b23b3b;
+    --text: #23252b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #e9e6de;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-family: 'Nanum Pen Script', cursive;
+    font-size: 44px;
+    margin: 0;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 4px 0 16px;
+  }
+  .board-frame {
+    position: relative;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        var(--paper) 0px, var(--paper) 27px,
+        var(--rule) 27px, var(--rule) 28px
+      );
+    border-radius: 4px;
+    box-shadow: 0 12px 30px rgba(30,25,10,0.18), 0 1px 0 rgba(255,255,255,0.6) inset;
+    padding: 10px;
+  }
+  .board-scroll {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: auto;
+    border-radius: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .turn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4) inset, 0 1px 1px rgba(0,0,0,0.2);
+  }
+  .dot.black { background: var(--black-stone); }
+  .dot.white { background: var(--white-stone); border: 1px solid #999; }
+  .msg {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+    min-height: 18px;
+  }
+  .btns {
+    display: flex;
+    gap: 8px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 14px;
+    border-radius: 7px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+    cursor: pointer;
+  }
+  button:active { transform: translateY(1px); }
+  button.primary {
+    background: var(--ink);
+    color: white;
+    border-color: var(--ink);
+  }
+  .rule-note {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: #6b6558;
+    line-height: 1.6;
+    border-top: 1px dashed #c9c3b0;
+    padding-top: 12px;
+  }
+  .warp-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .warp-control label {
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .warp-control input[type=range] {
+    flex: 1;
+    accent-color: var(--ink);
+  }
+  .warp-control .val {
+    width: 44px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .zoom-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .zoom-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fffdf9;
+    border: 1px solid #c9c3b0;
+    border-radius: 7px;
+    padding: 2px;
+  }
+  .zoom-group button {
+    border: none;
+    background: transparent;
+    padding: 6px 11px;
+    font-weight: 700;
+    border-radius: 5px;
+  }
+  .zoom-group button:hover { background: #efe9db; }
+  .zoom-group .zoomVal {
+    min-width: 44px;
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .undo-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .save-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #c9c3b0;
+    flex-wrap: wrap;
+  }
+  .save-row select {
+    flex: 1;
+    min-width: 140px;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+  .save-row select:disabled { color: #9a958a; }
+
+  .chat {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #c9c3b0;
+  }
+  .chat-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .chat-title input[type=text] {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+  .chat-title input[type=text]:disabled { background: #f0ede5; color: #9a958a; }
+
+  .chat-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+  }
+  .chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+  .chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
+  .chat-name {
+    font-size: 11px;
+    color: #9a958a;
+    margin: 0 0 2px 4px;
+  }
+  .chat-log {
+    height: 150px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 7px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    font-size: 13px;
+  }
+  .chat-empty {
+    margin: auto;
+    color: #9a958a;
+    font-size: 12px;
+  }
+  .chat-line {
+    padding: 6px 10px;
+    border-radius: 12px;
+    line-height: 1.4;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .chat-line.mine { background: var(--ink); color: #fffdf9; }
+  .chat-line.theirs { background: #ece9df; color: var(--text); }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .chat-input-row input[type=text] {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+  .chat-input-row input[type=text]:disabled { background: #f0ede5; color: #9a958a; }
+  button.danger { color: var(--accent); }
+
+  button:disabled {
+    background: #ebe7dc;
+    border-color: #d5cfbe;
+    color: #a49e91;
+    cursor: default;
+  }
+  button.primary:disabled {
+    background: #b9bdd0;
+    border-color: #b9bdd0;
+    color: #f2f1ec;
+  }
+
+  [hidden] { display: none !important; }
+  .modal-back {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(35,30,20,0.45);
+  }
+  .modal {
+    width: 100%;
+    max-width: 320px;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--paper);
+    box-shadow: 0 18px 40px rgba(30,25,10,0.35);
+  }
+  .modal-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .modal input[type=text] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 11px;
+    border-radius: 7px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+  .modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .room {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #c9c3b0;
+  }
+  .room-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .room-where {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .room-head button { font-size: 12px; padding: 5px 8px; }
+  .room-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .room-row input[type=text] {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+  .room-row button { font-size: 12px; padding: 6px 9px; white-space: nowrap; }
+
+  .room-row label {
+    align-self: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .room-row input[type=number] {
+    flex: 0 0 62px;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #c9c3b0;
+    background: #fffdf9;
+    color: var(--text);
+  }
+
+  #roomMaxNew { flex: 0 0 54px; }
+  #roomCodeInput {
+    flex: 0 0 76px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .room-list {
+    max-height: 120px;
+    overflow-y: auto;
+    margin-top: 8px;
+  }
+  .room-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 4px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #ddd7c6;
+    background: #fffdf9;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+  .room-item:hover { border-color: var(--ink-soft); }
+  .room-item .name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .room-item .count {
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .room-item .code {
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--ink-soft);
+  }
+  .room-empty {
+    padding: 8px;
+    font-size: 12px;
+    color: #9a958a;
+  }
+  .room-msg {
+    min-height: 15px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .match {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: #f1eee4;
+  }
+  .match-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .match-state {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .match-state .sec {
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+  }
+  .match-head button { font-size: 12px; padding: 5px 9px; }
+  .match-players {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    min-height: 15px;
+  }
+
+  .admin {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px dashed var(--accent);
+    background: #fdf6f4;
+  }
+  .admin-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .admin-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .admin-btns button { font-size: 12px; padding: 6px 9px; }
+  .admin-msg {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    min-height: 16px;
+  }
+
+  @media (min-width: 1060px) {
+    .wrap {
+      max-width: 1100px;
+      display: flex;
+      align-items: flex-start;
+      gap: 22px;
+    }
+    .main-col {
+      flex: 1;
+      min-width: 0;
+    }
+    .side {
+      flex: 0 0 340px;
+      position: sticky;
+      top: 20px;
+    }
+    .chat {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .chat-log { height: 46vh; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main-col">
+  <header>
+  </header>
+  <div class="turn">
+    <span class="dot" id="turnDot"></span>
+    <span id="turnText">흑 차례</span>
+  </div>
+
+  <div class="board-frame">
+    <div class="board-scroll" id="boardScroll">
+      <canvas id="board" width="800" height="800"></canvas>
+    </div>
+  </div>
+
+  <div class="zoom-row">
+    <div class="zoom-group">
+      <button id="zoomOutBtn" title="축소">−</button>
+      <span class="zoomVal" id="zoomVal">100%</span>
+      <button id="zoomInBtn" title="확대">+</button>
+    </div>
+    <button id="zoomResetBtn">원래 크기</button>
+    <button id="undoBtn" class="undo-btn">↩ 한 수 무르기</button>
+  </div>
+
+  <div class="warp-control">
+    <label for="warpSlider">삐뚤빼뚤 정도</label>
+    <input type="range" id="warpSlider" min="0" max="100" value="60" step="1" />
+    <span class="val" id="warpVal">60%</span>
+  </div>
+  <div class="warp-control">
+    <label for="allowTangleCheck">위치 꼬임 허용</label>
+    <input type="checkbox" id="allowTangleCheck" />
+  </div>
+
+  <div class="warp-control">
+    <label for="onlineCheck">온라인 대전</label>
+    <input type="checkbox" id="onlineCheck" />
+    <span class="val" id="onlineStatus">꺼짐</span>
+  </div>
+
+  <div class="hud">
+    <div class="msg" id="msg"></div>
+    <div class="btns">
+      <button id="resetBtn">다시 시작 (같은 판)</button>
+      <button id="reshuffleBtn" class="primary">새 판</button>
+    </div>
+  </div>
+
+  <div class="save-row">
+    <button id="saveBoardBtn">＋ 이 판 저장</button>
+    <select id="savedList" aria-label="저장한 판 목록"></select>
+    <button id="loadBoardBtn">불러오기</button>
+    <button id="deleteBoardBtn" class="danger">삭제</button>
+  </div>
+  </div>
+
+  <div class="side">
+  <div class="room" id="roomPanel" hidden>
+    <div class="room-head">
+      <span class="room-where" id="roomWhere">로비</span>
+      <button id="roomLeaveBtn" hidden>나가기</button>
+    </div>
+
+    <div id="roomBrowse">
+      <div class="room-row">
+        <input type="text" id="roomTitleInput" maxlength="20" placeholder="방 제목" />
+        <input type="number" id="roomMaxNew" min="2" max="20" value="8" title="최대 인원" />
+        <button id="roomCreateBtn" class="primary">방 만들기</button>
+      </div>
+      <div class="room-row">
+        <input type="text" id="roomCodeInput" maxlength="4" placeholder="코드" />
+        <button id="roomJoinBtn">참가</button>
+      </div>
+      <div class="room-list" id="roomList"></div>
+    </div>
+
+    <div class="room-row" id="roomMaxRow" hidden>
+      <label for="roomMaxInput">최대 인원</label>
+      <input type="number" id="roomMaxInput" min="2" max="20" />
+    </div>
+
+    <div class="room-row" id="roomInvite" hidden>
+      <input type="text" id="roomInviteLink" readonly />
+      <button id="roomCopyBtn">링크 복사</button>
+    </div>
+
+    <div class="match" id="matchPanel" hidden>
+      <div class="match-head">
+        <span class="match-state" id="matchState">대기 중</span>
+        <button id="pickBlackBtn" hidden>흑</button>
+        <button id="pickWhiteBtn" hidden>백</button>
+        <button id="matchOkBtn" class="primary" hidden>확인</button>
+        <button id="readyBtn">준비완료</button>
+      </div>
+      <div class="match-players" id="matchPlayers"></div>
+    </div>
+
+    <div class="room-msg" id="roomMsg"></div>
+  </div>
+
+  <div class="chat">
+    <div class="chat-title">
+      <span>채팅</span>
+      <input type="text" id="nickInput" maxlength="12" placeholder="닉네임" disabled />
+    </div>
+    <div class="chat-log" id="chatLog">
+      <div class="chat-empty" id="chatEmpty">온라인 대전을 켜면 대화할 수 있음</div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" maxlength="200" placeholder="메시지 입력" disabled />
+      <button id="chatSendBtn" disabled>보내기</button>
+    </div>
+
+    <div class="admin" id="adminPanel" hidden>
+      <div class="admin-title">관리</div>
+      <div class="admin-btns">
+        <button id="adminClearChatBtn" class="danger">대화 초기화</button>
+        <button id="adminClearGameBtn" class="danger">판 초기화</button>
+        <button id="adminClearUsersBtn" class="danger">이름 목록 정리</button>
+      </div>
+      <div class="admin-msg" id="adminMsg"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div class="modal-back" id="nickModal" hidden>
+  <div class="modal">
+    <div class="modal-title">닉네임 입력</div>
+    <input type="text" id="nickModalInput" maxlength="12" placeholder="닉네임" />
+    <div class="modal-btns">
+      <button id="nickCancelBtn">취소</button>
+      <button id="nickOkBtn" class="primary">참가</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const N = 15;
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const SIZE = 800;
+  const MARGIN = 46;
+  const SPACING = (SIZE - MARGIN * 2) / (N - 1);
+  const HIT_R = SPACING * 0.42;
+
+  let grid = [];
+  let board = [];
+  let turn = 1;
+  let gameOver = false;
+  let lastMove = null;
+  let winLine = null;
+  let seed = Date.now() % 100000;
+  let intensity = 0.6;
+  let moveHistory = [];
+  let zoom = 1;
+
+  const turnDot = document.getElementById('turnDot');
+  const turnText = document.getElementById('turnText');
+  const msg = document.getElementById('msg');
+  const warpSlider = document.getElementById('warpSlider');
+  const warpVal = document.getElementById('warpVal');
+  const allowTangleCheck = document.getElementById('allowTangleCheck');
+  const onlineCheck = document.getElementById('onlineCheck');
+  const onlineStatus = document.getElementById('onlineStatus');
+  const chatLog = document.getElementById('chatLog');
+  const chatEmpty = document.getElementById('chatEmpty');
+  const chatInput = document.getElementById('chatInput');
+  const chatSendBtn = document.getElementById('chatSendBtn');
+  const nickInput = document.getElementById('nickInput');
+  const nickModal = document.getElementById('nickModal');
+  const nickModalInput = document.getElementById('nickModalInput');
+  const nickOkBtn = document.getElementById('nickOkBtn');
+  const nickCancelBtn = document.getElementById('nickCancelBtn');
+  const adminPanel = document.getElementById('adminPanel');
+  const adminMsg = document.getElementById('adminMsg');
+  const roomPanel = document.getElementById('roomPanel');
+  const roomWhere = document.getElementById('roomWhere');
+  const roomLeaveBtn = document.getElementById('roomLeaveBtn');
+  const roomBrowse = document.getElementById('roomBrowse');
+  const roomTitleInput = document.getElementById('roomTitleInput');
+  const roomMaxNew = document.getElementById('roomMaxNew');
+  const roomMaxRow = document.getElementById('roomMaxRow');
+  const roomMaxInput = document.getElementById('roomMaxInput');
+  const roomCreateBtn = document.getElementById('roomCreateBtn');
+  const roomCodeInput = document.getElementById('roomCodeInput');
+  const roomJoinBtn = document.getElementById('roomJoinBtn');
+  const roomListEl = document.getElementById('roomList');
+  const roomInvite = document.getElementById('roomInvite');
+  const roomInviteLink = document.getElementById('roomInviteLink');
+  const roomCopyBtn = document.getElementById('roomCopyBtn');
+  const roomMsg = document.getElementById('roomMsg');
+  const matchPanel = document.getElementById('matchPanel');
+  const matchState = document.getElementById('matchState');
+  const matchPlayers = document.getElementById('matchPlayers');
+  const readyBtn = document.getElementById('readyBtn');
+  const pickBlackBtn = document.getElementById('pickBlackBtn');
+  const pickWhiteBtn = document.getElementById('pickWhiteBtn');
+  const matchOkBtn = document.getElementById('matchOkBtn');
+  const boardScroll = document.getElementById('boardScroll');
+  const zoomVal = document.getElementById('zoomVal');
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function generateGrid(newSeed, newIntensity) {
+    seed = newSeed;
+    if (newIntensity !== undefined) intensity = newIntensity;
+    grid = allowTangleCheck.checked ? buildWarpedGrid(null) : repairTangles();
+  }
+
+  function buildWarpedGrid(damp) {
+    const rnd = mulberry32(seed);
+    const rowPhaseA = [], rowPhaseB = [], colPhaseA = [], colPhaseB = [];
+    for (let i = 0; i < N; i++) {
+      rowPhaseA.push(rnd() * Math.PI * 2);
+      rowPhaseB.push(rnd() * Math.PI * 2);
+    }
+    for (let j = 0; j < N; j++) {
+      colPhaseA.push(rnd() * Math.PI * 2);
+      colPhaseB.push(rnd() * Math.PI * 2);
+    }
+
+    const amp1 = SPACING * 0.62 * intensity;
+    const amp2 = SPACING * 0.26 * intensity;
+    const f1 = 0.55, f2 = 1.25;
+
+    const g = [];
+    for (let i = 0; i < N; i++) {
+      const row = [];
+      for (let j = 0; j < N; j++) {
+        const s = damp ? damp[i][j] : 1;
+        const dx = (amp1 * Math.sin(j * f1 + rowPhaseA[i]) + amp2 * Math.sin(j * f2 + rowPhaseB[i] + 1.7)) * s;
+        const dy = (amp1 * Math.sin(i * f1 + colPhaseA[j]) + amp2 * Math.sin(i * f2 + colPhaseB[j] + 1.7)) * s;
+        row.push({
+          x: MARGIN + j * SPACING + dx,
+          y: MARGIN + i * SPACING + dy
+        });
+      }
+      g.push(row);
+    }
+    return g;
+  }
+
+  const TANGLE_MIN_GAP = SPACING * 0.16;
+  const DAMP_STEP = 0.93;
+  const MAX_REPAIR_ITER = 40;
+
+  function sampleCurve(pts, steps) {
+    const out = [];
+    for (let n = 0; n < pts.length - 1; n++) {
+      const p0 = pts[n - 1] || pts[n];
+      const p1 = pts[n];
+      const p2 = pts[n + 1];
+      const p3 = pts[n + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps, u = 1 - t;
+        out.push({
+          x: u*u*u*p1.x + 3*u*u*t*c1x + 3*u*t*t*c2x + t*t*t*p2.x,
+          y: u*u*u*p1.y + 3*u*u*t*c1y + 3*u*t*t*c2y + t*t*t*p2.y,
+          k: n + t
+        });
+      }
+    }
+    const last = pts[pts.length - 1];
+    out.push({ x: last.x, y: last.y, k: pts.length - 1 });
+    return out;
+  }
+
+  function valueAt(poly, t, axis) {
+    const A = axis === 'y' ? 'y' : 'x';
+    const B = axis === 'y' ? 'x' : 'y';
+    if (t <= poly[0][A]) return { v: poly[0][B], k: poly[0].k };
+    for (let n = 1; n < poly.length; n++) {
+      if (poly[n][A] >= t) {
+        const p = poly[n - 1], q = poly[n];
+        const d = q[A] - p[A];
+        const r = d === 0 ? 0 : (t - p[A]) / d;
+        return { v: p[B] + (q[B] - p[B]) * r, k: p.k + (q.k - p.k) * r };
+      }
+    }
+    const l = poly[poly.length - 1];
+    return { v: l[B], k: l.k };
+  }
+
+  function findTangles(g) {
+    const hits = [];
+    const cols = [], rows = [];
+    for (let j = 0; j < N; j++) {
+      const p = []; for (let i = 0; i < N; i++) p.push(g[i][j]);
+      cols.push(sampleCurve(p, 12));
+    }
+    for (let i = 0; i < N; i++) {
+      const p = []; for (let j = 0; j < N; j++) p.push(g[i][j]);
+      rows.push(sampleCurve(p, 12));
+    }
+    const STEPS = 60;
+    const clamp = (v) => Math.max(0, Math.min(N - 1, v));
+
+    for (let j = 0; j < N - 1; j++) {
+      const a = cols[j], b = cols[j + 1];
+      const lo = Math.max(a[0].y, b[0].y);
+      const hi = Math.min(a[a.length - 1].y, b[b.length - 1].y);
+      for (let s = 0; s <= STEPS; s++) {
+        const Y = lo + (hi - lo) * s / STEPS;
+        const va = valueAt(a, Y, 'y'), vb = valueAt(b, Y, 'y');
+        if (vb.v - va.v < TANGLE_MIN_GAP) {
+          const i = clamp(Math.round((va.k + vb.k) / 2));
+          hits.push({ dir: 'v', i, j });
+        }
+      }
+    }
+    for (let i = 0; i < N - 1; i++) {
+      const a = rows[i], b = rows[i + 1];
+      const lo = Math.max(a[0].x, b[0].x);
+      const hi = Math.min(a[a.length - 1].x, b[b.length - 1].x);
+      for (let s = 0; s <= STEPS; s++) {
+        const X = lo + (hi - lo) * s / STEPS;
+        const va = valueAt(a, X, 'x'), vb = valueAt(b, X, 'x');
+        if (vb.v - va.v < TANGLE_MIN_GAP) {
+          const j = clamp(Math.round((va.k + vb.k) / 2));
+          hits.push({ dir: 'h', i, j });
+        }
+      }
+    }
+    return hits;
+  }
+
+  function repairTangles() {
+    const damp = Array.from({ length: N }, () => Array(N).fill(1));
+    let g = buildWarpedGrid(damp);
+    for (let iter = 0; iter < MAX_REPAIR_ITER; iter++) {
+      const hits = findTangles(g);
+      if (hits.length === 0) break;
+      const clamp = (v) => Math.max(0, Math.min(N - 1, v));
+      for (const h of hits) {
+
+        const cells = h.dir === 'v'
+          ? [[h.i, h.j], [h.i, h.j + 1], [clamp(h.i + 1), h.j], [clamp(h.i + 1), h.j + 1],
+             [clamp(h.i - 1), h.j], [clamp(h.i - 1), h.j + 1]]
+          : [[h.i, h.j], [h.i + 1, h.j], [h.i, clamp(h.j + 1)], [h.i + 1, clamp(h.j + 1)],
+             [h.i, clamp(h.j - 1)], [h.i + 1, clamp(h.j - 1)]];
+        for (const [ci, cj] of cells) damp[ci][cj] *= DAMP_STEP;
+      }
+      g = buildWarpedGrid(damp);
+    }
+    return g;
+  }
+
+  function resetGame(keepGrid) {
+    board = Array.from({ length: N }, () => Array(N).fill(0));
+    turn = 1;
+    gameOver = false;
+    lastMove = null;
+    winLine = null;
+    moveHistory = [];
+    msg.textContent = '';
+    if (!keepGrid) generateGrid(Date.now() % 100000 + Math.floor(Math.random() * 1000), intensity);
+    updateHud();
+    draw();
+  }
+
+  function updateHud() {
+    turnDot.className = 'dot ' + (turn === 1 ? 'black' : 'white');
+    turnText.textContent = (turn === 1 ? '흑' : '백') + ' 차례';
+  }
+
+  function strokeSmoothPath(points, color, width) {
+    if (points.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    if (points.length === 2) {
+      ctx.lineTo(points[1].x, points[1].y);
+    } else {
+      for (let k = 0; k < points.length - 1; k++) {
+        const p0 = points[k - 1] || points[k];
+        const p1 = points[k];
+        const p2 = points[k + 1];
+        const p3 = points[k + 2] || p2;
+        const c1x = p1.x + (p2.x - p0.x) / 6;
+        const c1y = p1.y + (p2.y - p0.y) / 6;
+        const c2x = p2.x - (p3.x - p1.x) / 6;
+        const c2y = p2.y - (p3.y - p1.y) / 6;
+        ctx.bezierCurveTo(c1x, c1y, c2x, c2y, p2.x, p2.y);
+      }
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, SIZE, SIZE);
+
+    for (let j = 0; j < N; j++) {
+      const pts = [];
+      for (let i = 0; i < N; i++) pts.push(grid[i][j]);
+      strokeSmoothPath(pts, 'rgba(44,57,104,0.55)', 1.6);
+    }
+
+    for (let i = 0; i < N; i++) {
+      const pts = [];
+      for (let j = 0; j < N; j++) pts.push(grid[i][j]);
+      strokeSmoothPath(pts, 'rgba(44,57,104,0.75)', 1.8);
+    }
+
+    if (winLine) {
+      const pts = winLine.map(([i, j]) => grid[i][j]);
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+      ctx.strokeStyle = 'rgba(178,59,59,0.85)';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        const p = grid[i][j];
+        const v = board[i][j];
+        if (v === 0) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(44,57,104,0.45)';
+          ctx.fill();
+        } else {
+          const r = SPACING * 0.27;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          if (v === 1) {
+            const g = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
+            g.addColorStop(0, '#4a4c55');
+            g.addColorStop(1, '#0f1013');
+            ctx.fillStyle = g;
+          } else {
+            const g = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
+            g.addColorStop(0, '#ffffff');
+            g.addColorStop(1, '#dedbd2');
+            ctx.fillStyle = g;
+          }
+          ctx.fill();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+          ctx.stroke();
+
+          if (lastMove && lastMove[0] === i && lastMove[1] === j) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, r * 0.4, 0, Math.PI * 2);
+            ctx.strokeStyle = v === 1 ? '#ddd' : '#b23b3b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+  }
+
+  function findNearestNode(x, y) {
+    let best = null, bestD = Infinity;
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        const p = grid[i][j];
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestD) { bestD = d; best = [i, j]; }
+      }
+    }
+    if (bestD <= HIT_R) return best;
+    return null;
+  }
+
+  function checkWin(i, j, player) {
+    const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+    for (const [di, dj] of dirs) {
+      const line = [[i, j]];
+      let ci = i + di, cj = j + dj;
+      while (ci >= 0 && ci < N && cj >= 0 && cj < N && board[ci][cj] === player) {
+        line.push([ci, cj]); ci += di; cj += dj;
+      }
+      ci = i - di; cj = j - dj;
+      while (ci >= 0 && ci < N && cj >= 0 && cj < N && board[ci][cj] === player) {
+        line.unshift([ci, cj]); ci -= di; cj -= dj;
+      }
+      if (line.length >= 5) return line;
+    }
+    return null;
+  }
+
+  function placeStone(i, j) {
+    if (gameOver || board[i][j] !== 0) return false;
+    board[i][j] = turn;
+    lastMove = [i, j];
+    moveHistory.push({ i, j, player: turn });
+    const win = checkWin(i, j, turn);
+    if (win) {
+      gameOver = true;
+      winLine = win;
+      msg.textContent = (turn === 1 ? '흑' : '백') + ' 승리!';
+    } else {
+      turn = turn === 1 ? 2 : 1;
+      updateHud();
+    }
+    return true;
+  }
+
+  function handlePick(clientX, clientY) {
+    if (gameOver) return;
+    if (!canPlace()) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = SIZE / rect.width;
+    const scaleY = SIZE / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    const node = findNearestNode(x, y);
+    if (!node) return;
+    if (!placeStone(node[0], node[1])) return;
+    draw();
+    saveSession();
+    syncMatchEnd();
+  }
+
+  function undoMove() {
+    if (moveHistory.length === 0) return;
+    if (inPlay()) return;
+    const last = moveHistory.pop();
+    board[last.i][last.j] = 0;
+    turn = last.player;
+    gameOver = false;
+    winLine = null;
+    msg.textContent = '';
+    if (moveHistory.length > 0) {
+      const prev = moveHistory[moveHistory.length - 1];
+      lastMove = [prev.i, prev.j];
+    } else {
+      lastMove = null;
+    }
+    updateHud();
+    draw();
+    saveSession();
+  }
+
+  function applyZoom() {
+    canvas.style.width = (zoom * 100) + '%';
+    canvas.style.height = 'auto';
+    zoomVal.textContent = Math.round(zoom * 100) + '%';
+  }
+
+  const DRAG_THRESHOLD = 6;
+  const pointers = new Map();
+  let dragMoved = false;
+  let startX = 0, startY = 0, startScrollLeft = 0, startScrollTop = 0;
+  let pinchStartDist = 0, pinchStartZoom = 1;
+
+  function pointerList() { return [...pointers.values()]; }
+  function pinchDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function zoomAround(newZoom, clientX, clientY) {
+    const prevW = canvas.getBoundingClientRect().width;
+    const rect = boardScroll.getBoundingClientRect();
+    const relX = clientX - rect.left;
+    const relY = clientY - rect.top;
+
+    const fx = prevW ? (boardScroll.scrollLeft + relX) / prevW : 0;
+    const fy = prevW ? (boardScroll.scrollTop + relY) / prevW : 0;
+    zoom = Math.max(1, Math.min(4, newZoom));
+    applyZoom();
+    const newW = canvas.getBoundingClientRect().width;
+    boardScroll.scrollLeft = fx * newW - relX;
+    boardScroll.scrollTop = fy * newW - relY;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    canvas.setPointerCapture(e.pointerId);
+    if (pointers.size === 1) {
+      dragMoved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      startScrollLeft = boardScroll.scrollLeft;
+      startScrollTop = boardScroll.scrollTop;
+    } else if (pointers.size === 2) {
+      const [a, b] = pointerList();
+      pinchStartDist = pinchDistance(a, b);
+      pinchStartZoom = zoom;
+      dragMoved = true;
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size >= 2) {
+      const [a, b] = pointerList();
+      const dist = pinchDistance(a, b);
+      if (pinchStartDist > 0) {
+        zoomAround(pinchStartZoom * (dist / pinchStartDist), (a.x + b.x) / 2, (a.y + b.y) / 2);
+      }
+      return;
+    }
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!dragMoved && Math.hypot(dx, dy) > DRAG_THRESHOLD) dragMoved = true;
+    if (dragMoved) {
+      boardScroll.scrollLeft = startScrollLeft - dx;
+      boardScroll.scrollTop = startScrollTop - dy;
+    }
+  });
+
+  function endPointer(e, allowTap) {
+    if (!pointers.has(e.pointerId)) return;
+    const wasSingle = pointers.size === 1;
+    pointers.delete(e.pointerId);
+    if (allowTap && wasSingle && !dragMoved) handlePick(e.clientX, e.clientY);
+
+    if (pointers.size === 1) {
+      const [p] = pointerList();
+      startX = p.x;
+      startY = p.y;
+      startScrollLeft = boardScroll.scrollLeft;
+      startScrollTop = boardScroll.scrollTop;
+      dragMoved = true;
+    }
+  }
+  canvas.addEventListener('pointerup', (e) => endPointer(e, true));
+  canvas.addEventListener('pointercancel', (e) => endPointer(e, false));
+
+  const STORAGE_KEY = 'wave-omok:boards';
+  const SESSION_KEY = 'wave-omok:current';
+  const savedList = document.getElementById('savedList');
+  const undoBtn = document.getElementById('undoBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const reshuffleBtn = document.getElementById('reshuffleBtn');
+  const saveBoardBtn = document.getElementById('saveBoardBtn');
+  const loadBoardBtn = document.getElementById('loadBoardBtn');
+  const deleteBoardBtn = document.getElementById('deleteBoardBtn');
+
+  function readSavedBoards() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeSavedBoards(list) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      msg.textContent = '이 브라우저에서는 저장을 쓸 수 없음';
+      return false;
+    }
+  }
+
+  function refreshSavedList() {
+    const list = readSavedBoards();
+    savedList.innerHTML = '';
+    if (list.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '저장한 판 없음';
+      savedList.appendChild(opt);
+    } else {
+      for (const b of list) {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.name;
+        savedList.appendChild(opt);
+      }
+    }
+    savedList.disabled = list.length === 0;
+    loadBoardBtn.disabled = list.length === 0;
+    deleteBoardBtn.disabled = list.length === 0;
+  }
+
+  function saveCurrentBoard() {
+    const list = readSavedBoards();
+    const pct = Math.round(intensity * 100);
+    const suggested = '판 ' + (list.length + 1) + ' (' + pct + '%' + (allowTangleCheck.checked ? ', 꼬임' : '') + ')';
+    const name = (prompt('저장할 이름', suggested) || '').trim() || suggested;
+    list.push({
+      id: String(Date.now()),
+      name,
+      seed,
+      intensity,
+      allowTangle: allowTangleCheck.checked
+    });
+    if (!writeSavedBoards(list)) return;
+    refreshSavedList();
+    savedList.value = list[list.length - 1].id;
+    msg.textContent = '"' + name + '" 저장함';
+  }
+
+  function loadSelectedBoard() {
+    const list = readSavedBoards();
+    const target = list.find(b => b.id === savedList.value);
+    if (!target) return;
+    allowTangleCheck.checked = !!target.allowTangle;
+    warpSlider.value = Math.round(target.intensity * 100);
+    warpVal.textContent = warpSlider.value + '%';
+    generateGrid(target.seed, target.intensity);
+    resetGame(true);
+    saveSession();
+    msg.textContent = '"' + target.name + '" 불러옴';
+  }
+
+  function deleteSelectedBoard() {
+    const list = readSavedBoards();
+    const target = list.find(b => b.id === savedList.value);
+    if (!target) return;
+    if (!confirm('"' + target.name + '" 삭제할까요?')) return;
+    if (!writeSavedBoards(list.filter(b => b.id !== target.id))) return;
+    refreshSavedList();
+    msg.textContent = '"' + target.name + '" 삭제함';
+  }
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAZvNJjUdua_EVsNtrsNcH31KB25vKC9rw",
+    authDomain: "wave-omok.firebaseapp.com",
+    databaseURL: "https://wave-omok-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "wave-omok",
+    storageBucket: "wave-omok.firebasestorage.app",
+    messagingSenderId: "24140803014",
+    appId: "1:24140803014:web:6d09bd7b396ce7df01e0c7"
+  };
+
+  const LOBBY_PATH = 'lobby';
+  const ROOMS_PATH = 'rooms';
+
+  const ROOM_LIST_PATH = 'roomList';
+  const GAME_PATH = 'game';
+  const CHAT_PATH = 'chat';
+  const CHAT_LIMIT = 50;
+  const ME_KEY = 'wave-omok:me';
+  const NICK_KEY = 'wave-omok:nick';
+  const USERS_PATH = 'users';
+
+  const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const CODE_LEN = 4;
+
+  const ROOM_GRACE_MS = 15000;
+  const ROOM_MAX_DEFAULT = 8;
+  const ROOM_MAX_LIMIT = 20;
+  const MATCH_PATH = 'match';
+  const COUNTDOWN_MS = 5000;
+  const CHOOSE_MS = 10000;
+
+  const SEAT_GRACE_MS = 12000;
+  const SEATS = 2;
+
+  const SESSION_ONLINE_KEY = 'wave-omok:session-online';
+  const SESSION_ROOM_KEY = 'wave-omok:session-room';
+
+  let online = false;
+  let gameRef = null, gameHandler = null;
+  let connRef = null, connHandler = null;
+  let chatRef = null, chatQuery = null, chatHandler = null, chatRemoveHandler = null;
+  let usersRef = null, usersHandler = null;
+  let roomListRef = null, roomListHandler = null;
+  let currentRoom = null;
+  let rooms = {};
+
+  let roomWatchers = {};
+  let roomCounts = {};
+  let matchRef = null, matchHandler = null;
+  let match = null;
+  let countTimer = null;
+  let seatLeftTimer = null;
+  let timeOffsetRef = null, timeOffsetHandler = null;
+  let timeOffset = 0;
+  let nickMap = {};
+  let applyingRemote = false;
+  let lastSig = null;
+
+  function ensureDb() {
+    if (typeof firebase === 'undefined') return null;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.database();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setOnlineStatus(text) { onlineStatus.textContent = text; }
+
+  let myId = null;
+  function getMyId() {
+    if (myId) return myId;
+    const gen = () => Math.random().toString(36).slice(2, 10);
+    try {
+      myId = localStorage.getItem(ME_KEY);
+      if (!myId) {
+        myId = gen();
+        localStorage.setItem(ME_KEY, myId);
+      }
+    } catch (e) {
+      myId = gen();
+    }
+    return myId;
+  }
+
+  function getNick() {
+    const v = nickInput.value.trim();
+    return v || ('손님' + getMyId().slice(0, 4));
+  }
+
+  function loadNick() {
+    let saved = null;
+    try { saved = localStorage.getItem(NICK_KEY); } catch (e) {  }
+    nickInput.value = saved || ('손님' + getMyId().slice(0, 4));
+  }
+
+  function displayName(from, fallback) {
+    return nickMap[from] || fallback || '손님';
+  }
+
+  function refreshChatNames() {
+    for (const box of chatLog.querySelectorAll('.chat-msg')) {
+      const nameEl = box.querySelector('.chat-name');
+      if (nameEl) nameEl.textContent = displayName(box.dataset.from, box.dataset.fallbackName);
+    }
+  }
+
+  function publishNick() {
+    if (!online || !usersRef) return;
+    usersRef.child(getMyId()).set({ name: getNick() }).catch(() => {  });
+  }
+
+  window.addEventListener('storage', e => {
+    if (e.key !== NICK_KEY || !e.newValue) return;
+    nickInput.value = e.newValue.slice(0, 12);
+  });
+
+  nickInput.addEventListener('change', () => {
+    nickInput.value = nickInput.value.trim().slice(0, 12);
+    try { localStorage.setItem(NICK_KEY, getNick()); } catch (e) {  }
+    publishNick();
+  });
+
+  let lastChatFrom = null;
+
+  function appendChatLine(key, from, fallbackName, text) {
+    chatEmpty.hidden = true;
+    const mine = from === getMyId();
+
+    const box = document.createElement('div');
+    box.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
+
+    box.dataset.from = from;
+    if (fallbackName) box.dataset.fallbackName = fallbackName;
+    if (key) box.dataset.key = key;
+
+    if (!mine && from !== lastChatFrom) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'chat-name';
+      nameEl.textContent = displayName(from, fallbackName);
+      box.appendChild(nameEl);
+    }
+
+    const el = document.createElement('div');
+    el.className = 'chat-line ' + (mine ? 'mine' : 'theirs');
+    el.textContent = text;
+    box.appendChild(el);
+
+    chatLog.appendChild(box);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    lastChatFrom = from;
+  }
+
+  function clearChatLog() {
+    for (const el of [...chatLog.querySelectorAll('.chat-msg')]) el.remove();
+    chatEmpty.hidden = false;
+    lastChatFrom = null;
+  }
+
+  function setChatEnabled(on) {
+    chatInput.disabled = !on;
+    chatSendBtn.disabled = !on;
+    nickInput.disabled = !on;
+    chatEmpty.textContent = on ? '아직 대화 없음' : '온라인 대전을 켜면 대화할 수 있음';
+  }
+
+  function sendChat() {
+    if (!online || !chatRef) return;
+    const text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = '';
+    chatRef.push({ from: getMyId(), name: getNick(), text: text.slice(0, 200), ts: Date.now() })
+      .catch(() => setOnlineStatus('채팅 전송 실패'));
+  }
+
+  chatSendBtn.addEventListener('click', sendChat);
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
+  });
+
+  function sigOf(st) {
+    return [
+      st.seed,
+      Math.round(st.intensity * 100),
+      st.allowTangle ? 1 : 0,
+      st.moves.map(m => m[0] + ',' + m[1]).join(';')
+    ].join('|');
+  }
+
+  function currentState() {
+    return {
+      seed,
+      intensity,
+      allowTangle: allowTangleCheck.checked,
+      moves: moveHistory.map(m => [m.i, m.j])
+    };
+  }
+
+  function normalizeState(raw) {
+    if (!raw || typeof raw.seed !== 'number' || typeof raw.intensity !== 'number') return null;
+    const moves = [];
+    const list = Array.isArray(raw.moves) ? raw.moves : [];
+    for (const mv of list) {
+      if (!Array.isArray(mv)) continue;
+      const [i, j] = mv;
+      if (!Number.isInteger(i) || !Number.isInteger(j)) continue;
+      if (i < 0 || i >= N || j < 0 || j >= N) continue;
+      moves.push([i, j]);
+    }
+    return { seed: raw.seed, intensity: raw.intensity, allowTangle: !!raw.allowTangle, moves };
+  }
+
+  function pushState() {
+    if (!online || !gameRef || applyingRemote) return;
+    const st = currentState();
+    lastSig = sigOf(st);
+    gameRef.set(st).catch(() => setOnlineStatus('전송 실패'));
+  }
+
+  function applyRemote(st) {
+    applyingRemote = true;
+    try {
+
+      if (st.seed !== seed || st.intensity !== intensity || st.allowTangle !== allowTangleCheck.checked) {
+        allowTangleCheck.checked = st.allowTangle;
+        warpSlider.value = Math.round(st.intensity * 100);
+        warpVal.textContent = warpSlider.value + '%';
+        generateGrid(st.seed, st.intensity);
+      }
+      resetGame(true);
+      for (const mv of st.moves) placeStone(mv[0], mv[1]);
+      updateHud();
+      draw();
+      saveSession();
+    } finally {
+      applyingRemote = false;
+    }
+    syncMatchEnd();
+  }
+
+  function placePath(sub) {
+    return (currentRoom ? ROOMS_PATH + '/' + currentRoom : LOBBY_PATH) + '/' + sub;
+  }
+
+  function attachPlace() {
+    const db = ensureDb();
+    if (!db) return;
+
+    gameRef = db.ref(placePath(GAME_PATH));
+    gameHandler = gameRef.on('value', snap => {
+      const st = normalizeState(snap.val());
+      if (!st) {
+
+        resetGame(true);
+        saveSession();
+        return;
+      }
+      const sig = sigOf(st);
+      if (sig === lastSig) return;
+      lastSig = sig;
+      applyRemote(st);
+    }, () => setOnlineStatus('수신 오류'));
+
+    clearChatLog();
+    setChatEnabled(true);
+
+    usersRef = db.ref(placePath(USERS_PATH));
+    usersHandler = usersRef.on('value', snap => {
+      const raw = snap.val() || {};
+      const next = {};
+      for (const id of Object.keys(raw)) {
+        const n = raw[id] && raw[id].name;
+        if (typeof n === 'string' && n.trim()) next[id] = n.slice(0, 12);
+      }
+      nickMap = next;
+      refreshChatNames();
+      renderMatch();
+      checkSeatLeft();
+
+      updateRoomUI();
+
+      const myName = nickMap[getMyId()];
+      if (myName && myName !== nickInput.value) {
+        nickInput.value = myName;
+        try { localStorage.setItem(NICK_KEY, myName); } catch (e) {  }
+      }
+    }, () => {  });
+
+    const meRef = usersRef.child(getMyId());
+    meRef.onDisconnect().remove();
+    publishNick();
+
+    chatRef = db.ref(placePath(CHAT_PATH));
+    chatQuery = chatRef.limitToLast(CHAT_LIMIT);
+    chatHandler = chatQuery.on('child_added', snap => {
+      const m = snap.val();
+      if (!m || typeof m.text !== 'string') return;
+
+      const fallback = (typeof m.name === 'string' && m.name.trim()) ? m.name.slice(0, 12) : '';
+      appendChatLine(snap.key, m.from, fallback, m.text.slice(0, 200));
+    }, () => setOnlineStatus('채팅 수신 오류'));
+
+    chatRemoveHandler = chatQuery.on('child_removed', snap => {
+      const box = chatLog.querySelector('.chat-msg[data-key="' + snap.key + '"]');
+      if (box) box.remove();
+      if (!chatLog.querySelector('.chat-msg')) {
+        chatEmpty.hidden = false;
+        lastChatFrom = null;
+      }
+    });
+
+    if (currentRoom) {
+      matchRef = db.ref(placePath(MATCH_PATH));
+      matchHandler = matchRef.on('value', snap => {
+        const raw = snap.val() || {};
+        match = {
+          state: typeof raw.state === 'string' ? raw.state : 'idle',
+          ready: raw.ready || {},
+          countStart: typeof raw.countStart === 'number' ? raw.countStart : 0,
+          chooser: typeof raw.chooser === 'string' ? raw.chooser : '',
+          chooseStart: typeof raw.chooseStart === 'number' ? raw.chooseStart : 0,
+          black: typeof raw.black === 'string' ? raw.black : '',
+          white: typeof raw.white === 'string' ? raw.white : '',
+          lastChooser: typeof raw.lastChooser === 'string' ? raw.lastChooser : '',
+          result: typeof raw.result === 'string' ? raw.result : ''
+        };
+        renderMatch();
+      }, () => { roomMsg.textContent = '대국 상태를 받지 못함'; });
+    } else {
+      match = null;
+      renderMatch();
+    }
+
+    updateRoomUI();
+  }
+
+  function detachPlace() {
+    if (usersRef) {
+      const meRef = usersRef.child(getMyId());
+      meRef.onDisconnect().cancel();
+      meRef.remove().catch(() => {  });
+    }
+
+    if (matchRef && isReady()) {
+      const me = getMyId();
+      matchRef.child('ready/' + me).remove().catch(() => {  });
+      matchRef.update({ state: 'idle', countStart: null }).catch(() => {  });
+    }
+    if (matchRef && matchHandler) matchRef.off('value', matchHandler);
+    matchRef = matchHandler = null;
+    match = null;
+    stopCountTimer();
+    clearSeatTimer();
+    renderMatch();
+
+    if (gameRef && gameHandler) gameRef.off('value', gameHandler);
+    if (usersRef && usersHandler) usersRef.off('value', usersHandler);
+    if (chatQuery && chatHandler) chatQuery.off('child_added', chatHandler);
+    if (chatQuery && chatRemoveHandler) chatQuery.off('child_removed', chatRemoveHandler);
+    gameRef = gameHandler = null;
+    usersRef = usersHandler = null;
+    chatRef = chatQuery = chatHandler = chatRemoveHandler = null;
+    nickMap = {};
+    lastSig = null;
+    clearChatLog();
+  }
+
+  function connectOnline() {
+
+    if (typeof firebase === 'undefined') {
+      setOnlineStatus('연결 불가 (오프라인?)');
+      onlineCheck.checked = false;
+      return;
+    }
+    const db = ensureDb();
+    if (!db) {
+      setOnlineStatus('연결 실패');
+      onlineCheck.checked = false;
+      return;
+    }
+
+    online = true;
+    setOnlineStatus('연결 중…');
+    roomPanel.hidden = false;
+
+    timeOffsetRef = db.ref('.info/serverTimeOffset');
+    timeOffsetHandler = timeOffsetRef.on('value', snap => {
+      timeOffset = typeof snap.val() === 'number' ? snap.val() : 0;
+    });
+
+    connRef = db.ref('.info/connected');
+    connHandler = connRef.on('value', snap => {
+      if (!online) return;
+      setOnlineStatus(snap.val() ? '연결됨' : '끊김 — 재접속 중…');
+    });
+
+    roomListRef = db.ref(ROOM_LIST_PATH);
+    roomListHandler = roomListRef.on('value', snap => {
+      rooms = {};
+      const raw = snap.val() || {};
+      for (const code of Object.keys(raw)) {
+        const r = raw[code] || {};
+        rooms[code] = {
+          title: (typeof r.title === 'string' && r.title.trim()) ? r.title.slice(0, 20) : '이름 없는 방',
+          created: typeof r.created === 'number' ? r.created : 0,
+          max: clampMax(r.max)
+        };
+      }
+      syncRoomWatchers();
+      renderRoomList();
+      updateRoomUI();
+    }, () => { roomMsg.textContent = '방 목록을 받지 못함'; });
+
+    let saved = null;
+    try { saved = sessionStorage.getItem(SESSION_ROOM_KEY); } catch (e) {  }
+    const wanted = new URLSearchParams(location.search).get('room') || saved;
+
+    currentRoom = null;
+    rememberSession();
+    attachPlace();
+    syncRoomWatchers();
+
+    if (wanted) enterRoom(wanted);
+  }
+
+  function disconnectOnline() {
+    detachPlace();
+    if (connRef && connHandler) connRef.off('value', connHandler);
+    if (roomListRef && roomListHandler) roomListRef.off('value', roomListHandler);
+    if (timeOffsetRef && timeOffsetHandler) timeOffsetRef.off('value', timeOffsetHandler);
+    timeOffsetRef = timeOffsetHandler = null;
+    connRef = connHandler = null;
+    roomListRef = roomListHandler = null;
+    online = false;
+    currentRoom = null;
+    clearRoomWatchers();
+    rooms = {};
+    roomPanel.hidden = true;
+    setOnlineStatus('꺼짐');
+    setChatEnabled(false);
+    rememberSession();
+  }
+
+  function syncRoomWatchers() {
+    const db = ensureDb();
+    if (!db || !online || currentRoom) { clearRoomWatchers(); return; }
+
+    for (const code of Object.keys(roomWatchers)) {
+      if (rooms[code]) continue;
+      roomWatchers[code].ref.off('value', roomWatchers[code].handler);
+      delete roomWatchers[code];
+      delete roomCounts[code];
+    }
+
+    for (const code of Object.keys(rooms)) {
+      if (roomWatchers[code]) continue;
+      const ref = db.ref(ROOMS_PATH + '/' + code + '/' + USERS_PATH);
+      const handler = ref.on('value', snap => {
+        roomCounts[code] = snap.exists() ? Object.keys(snap.val()).length : 0;
+        renderRoomList();
+        removeIfEmpty(code);
+      }, () => {  });
+      roomWatchers[code] = { ref: ref, handler: handler };
+    }
+  }
+
+  function clearRoomWatchers() {
+    for (const code of Object.keys(roomWatchers)) {
+      roomWatchers[code].ref.off('value', roomWatchers[code].handler);
+    }
+    roomWatchers = {};
+    roomCounts = {};
+  }
+
+  function removeIfEmpty(code) {
+    if (!online || currentRoom) return;
+    if (roomCounts[code] !== 0) return;
+    const info = rooms[code];
+
+    if (!info || Date.now() - info.created < ROOM_GRACE_MS) return;
+    const db = ensureDb();
+    if (!db) return;
+    db.ref(ROOM_LIST_PATH + '/' + code).remove().catch(() => {  });
+    db.ref(ROOMS_PATH + '/' + code).remove().catch(() => {  });
+  }
+
+  function clampMax(v) {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n)) return ROOM_MAX_DEFAULT;
+    return Math.min(ROOM_MAX_LIMIT, Math.max(SEATS, n));
+  }
+
+  function makeRoomCode() {
+    let out = '';
+    for (let i = 0; i < CODE_LEN; i++) {
+      out += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    }
+    return out;
+  }
+
+  function inviteLink() {
+    return location.origin + location.pathname + '?room=' + currentRoom;
+  }
+
+  function updateRoomUI() {
+    const inRoom = !!currentRoom;
+    roomBrowse.hidden = inRoom;
+    roomInvite.hidden = !inRoom;
+    roomMaxRow.hidden = !inRoom;
+    roomLeaveBtn.hidden = !inRoom;
+    if (inRoom) {
+      const info = rooms[currentRoom];
+      const title = info ? info.title : '이름 없는 방';
+      const max = info ? info.max : ROOM_MAX_DEFAULT;
+
+      const count = Object.keys(nickMap).length;
+      roomWhere.textContent = title + ' (' + currentRoom + ') · ' + count + '/' + max + '명';
+
+      if (document.activeElement !== roomMaxInput) roomMaxInput.value = max;
+      roomInviteLink.value = inviteLink();
+    } else {
+      roomWhere.textContent = '로비';
+    }
+  }
+
+  function renderRoomList() {
+    roomListEl.textContent = '';
+    const codes = Object.keys(rooms).filter(c => c !== currentRoom);
+    if (codes.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'room-empty';
+      empty.textContent = '만들어진 방이 없음';
+      roomListEl.appendChild(empty);
+      return;
+    }
+    for (const code of codes) {
+      const btn = document.createElement('button');
+      btn.className = 'room-item';
+      btn.addEventListener('click', () => enterRoom(code));
+
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = rooms[code].title;
+
+      const countEl = document.createElement('span');
+      countEl.className = 'count';
+      countEl.textContent = (roomCounts[code] || 0) + '/' + rooms[code].max + '명';
+
+      const codeEl = document.createElement('span');
+      codeEl.className = 'code';
+      codeEl.textContent = code;
+
+      btn.appendChild(name);
+      btn.appendChild(countEl);
+      btn.appendChild(codeEl);
+      roomListEl.appendChild(btn);
+    }
+  }
+
+  function goPlace(code) {
+    if (currentRoom === code) return;
+    detachPlace();
+    currentRoom = code;
+    roomMsg.textContent = '';
+    rememberSession();
+    attachPlace();
+    syncRoomWatchers();
+    renderRoomList();
+  }
+
+  function enterRoom(code) {
+    code = (code || '').toUpperCase().trim();
+    if (code.length !== CODE_LEN) {
+      roomMsg.textContent = '코드는 ' + CODE_LEN + '글자임';
+      return;
+    }
+    const db = ensureDb();
+    if (!db) return;
+    db.ref(ROOM_LIST_PATH + '/' + code).once('value')
+      .then(snap => {
+        if (!snap.exists()) {
+          roomMsg.textContent = '없는 방임';
+          return null;
+        }
+        const max = clampMax((snap.val() || {}).max);
+
+        return db.ref(ROOMS_PATH + '/' + code + '/' + USERS_PATH).once('value')
+          .then(us => {
+            const count = us.exists() ? Object.keys(us.val()).length : 0;
+            if (count >= max) {
+              roomMsg.textContent = '방이 꽉 참 (' + count + '/' + max + ')';
+              return;
+            }
+            roomCodeInput.value = '';
+            goPlace(code);
+          });
+      })
+      .catch(() => { roomMsg.textContent = '확인 실패'; });
+  }
+
+  function createRoom() {
+    const db = ensureDb();
+    if (!db) return;
+    const title = roomTitleInput.value.trim().slice(0, 20) || '이름 없는 방';
+    const max = clampMax(roomMaxNew.value);
+    roomMaxNew.value = max;
+
+    const tryOnce = (left) => {
+      if (left <= 0) { roomMsg.textContent = '방을 만들지 못함'; return; }
+      const code = makeRoomCode();
+      const ref = db.ref(ROOM_LIST_PATH + '/' + code);
+      ref.once('value').then(snap => {
+        if (snap.exists()) { tryOnce(left - 1); return; }
+        return ref.set({ title: title, created: Date.now(), max: max }).then(() => {
+          roomTitleInput.value = '';
+          goPlace(code);
+        });
+      }).catch(() => { roomMsg.textContent = '방을 만들지 못함'; });
+    };
+    tryOnce(5);
+  }
+
+  roomCreateBtn.addEventListener('click', createRoom);
+  roomJoinBtn.addEventListener('click', () => enterRoom(roomCodeInput.value));
+  roomCodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); enterRoom(roomCodeInput.value); }
+  });
+  roomTitleInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); createRoom(); }
+  });
+  roomLeaveBtn.addEventListener('click', () => goPlace(null));
+
+  roomMaxInput.addEventListener('change', () => {
+    if (!currentRoom) return;
+    const max = clampMax(roomMaxInput.value);
+    roomMaxInput.value = max;
+    const db = ensureDb();
+    if (!db) return;
+    db.ref(ROOM_LIST_PATH + '/' + currentRoom + '/max').set(max)
+      .then(() => { roomMsg.textContent = '최대 인원 ' + max + '명으로 바꿈'; })
+      .catch(() => { roomMsg.textContent = '바꾸지 못함'; });
+  });
+
+  roomCopyBtn.addEventListener('click', () => {
+    roomInviteLink.select();
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(roomInviteLink.value)
+        .then(() => { roomMsg.textContent = '링크 복사됨'; })
+        .catch(() => { roomMsg.textContent = '직접 복사해주세요'; });
+    } else {
+      roomMsg.textContent = '직접 복사해주세요';
+    }
+  });
+
+  function rememberSession() {
+    try {
+      if (online) {
+        sessionStorage.setItem(SESSION_ONLINE_KEY, '1');
+        if (currentRoom) sessionStorage.setItem(SESSION_ROOM_KEY, currentRoom);
+        else sessionStorage.removeItem(SESSION_ROOM_KEY);
+      } else {
+        sessionStorage.removeItem(SESSION_ONLINE_KEY);
+        sessionStorage.removeItem(SESSION_ROOM_KEY);
+      }
+    } catch (e) {  }
+  }
+
+  function serverNow() {
+    return Date.now() + timeOffset;
+  }
+
+  function readyList() {
+    return match && match.ready ? Object.keys(match.ready) : [];
+  }
+
+  function isReady() {
+    return readyList().indexOf(getMyId()) !== -1;
+  }
+
+  function toggleReady() {
+    if (!matchRef) return;
+    const me = getMyId();
+
+    matchRef.child('ready').transaction(cur => {
+      cur = cur || {};
+      if (cur[me]) {
+        delete cur[me];
+        return cur;
+      }
+      if (Object.keys(cur).length >= SEATS) return;
+      cur[me] = true;
+      return cur;
+    }, (err, committed, snap) => {
+      if (err || !committed) return;
+      const now = snap.val() || {};
+      const n = Object.keys(now).length;
+      if (n >= SEATS) {
+
+        matchRef.update({ state: 'counting', countStart: serverNow() });
+      } else {
+
+        matchRef.update({ state: 'idle', countStart: null });
+      }
+    });
+  }
+
+  function checkCountdown() {
+    if (!matchRef || !match) return;
+
+    if (match.state === 'counting') {
+      const left = COUNTDOWN_MS - (serverNow() - (match.countStart || 0));
+      if (left > 0) return;
+
+      const list = readyList();
+      if (list.length < SEATS) { matchRef.update({ state: 'idle', countStart: null }); return; }
+      const prev = match.lastChooser;
+      const next = (prev && list.indexOf(prev) !== -1)
+        ? list[(list.indexOf(prev) + 1) % list.length]
+        : list[Math.floor(Math.random() * list.length)];
+      matchRef.update({
+        state: 'choosing',
+        countStart: null,
+        chooser: next,
+        chooseStart: serverNow()
+      });
+      return;
+    }
+
+    if (match.state === 'choosing') {
+      const left = CHOOSE_MS - (serverNow() - (match.chooseStart || 0));
+
+      if (left <= 0) pickColor(1, true);
+    }
+  }
+
+  function pickColor(color, auto) {
+    if (!matchRef || !match || match.state !== 'choosing') return;
+    const chooser = match.chooser;
+    if (!auto && chooser !== getMyId()) return;
+
+    const list = readyList();
+    const other = list.filter(id => id !== chooser)[0] || '';
+    if (!chooser || !other) {
+      matchRef.update({ state: 'idle', chooser: null, chooseStart: null });
+      return;
+    }
+
+    if (gameRef) gameRef.child('moves').remove().catch(() => {  });
+
+    matchRef.update({
+      state: 'playing',
+      chooseStart: null,
+      black: color === 1 ? chooser : other,
+      white: color === 1 ? other : chooser,
+      lastChooser: chooser
+    });
+  }
+
+  function endMatch(result) {
+    if (!matchRef || !match || match.state !== 'playing') return;
+    matchRef.update({ state: 'ended', result: result });
+  }
+
+  function syncMatchEnd() {
+    if (!inPlay() || !gameOver) return;
+
+    endMatch(msg.textContent || '대국 종료');
+  }
+
+  function resetMatch() {
+    if (!matchRef) return;
+    matchRef.update({
+      state: 'idle',
+      ready: null,
+      countStart: null,
+      chooser: null,
+      chooseStart: null,
+      black: null,
+      white: null,
+      result: null
+    });
+  }
+
+  function checkSeatLeft() {
+    if (!inPlay() || (nickMap[match.black] && nickMap[match.white])) {
+      clearSeatTimer();
+      return;
+    }
+    if (seatLeftTimer) return;
+
+    seatLeftTimer = setTimeout(() => {
+      seatLeftTimer = null;
+      if (!inPlay()) return;
+      if (nickMap[match.black] && nickMap[match.white]) return;
+      const gone = nickMap[match.black] ? seatName(match.white) : seatName(match.black);
+      endMatch((gone || '대국자') + ' 님이 나감');
+    }, SEAT_GRACE_MS);
+
+    renderMatch();
+  }
+
+  function clearSeatTimer() {
+    if (!seatLeftTimer) return;
+    clearTimeout(seatLeftTimer);
+    seatLeftTimer = null;
+  }
+
+  function inPlay() {
+    return !!(online && currentRoom && match && match.state === 'playing');
+  }
+
+  function canPlace() {
+    if (!inPlay()) return true;
+    const me = getMyId();
+    if (me !== match.black && me !== match.white) return false;
+    return turn === (me === match.black ? 1 : 2);
+  }
+
+  function updateControlLock() {
+
+    const locked = inPlay() || (online && currentRoom && match && match.state === 'ended');
+    warpSlider.disabled = locked;
+    allowTangleCheck.disabled = locked;
+    undoBtn.disabled = locked;
+    resetBtn.disabled = locked;
+    reshuffleBtn.disabled = locked;
+    loadBoardBtn.disabled = locked;
+    saveBoardBtn.disabled = false;
+  }
+
+  function seatName(id) {
+    return id ? (nickMap[id] || '손님') : '';
+  }
+
+  function renderMatch() {
+    const inRoom = !!currentRoom;
+    matchPanel.hidden = !inRoom;
+    if (!inRoom || !match) {
+      stopCountTimer();
+      updateControlLock();
+      return;
+    }
+    updateControlLock();
+
+    const list = readyList();
+    const mine = isReady();
+    const state = match.state;
+
+    const iChoose = state === 'choosing' && match.chooser === getMyId();
+    pickBlackBtn.hidden = !iChoose;
+    pickWhiteBtn.hidden = !iChoose;
+
+    matchOkBtn.hidden = state !== 'ended';
+
+    readyBtn.hidden = state === 'choosing' || state === 'playing' || state === 'ended';
+
+    if (state === 'choosing') {
+      const left = Math.max(0, CHOOSE_MS - (serverNow() - (match.chooseStart || 0)));
+      const sec = Math.ceil(left / 1000);
+      matchState.textContent = iChoose
+        ? '색을 고르세요 · ' + sec + '초'
+        : seatName(match.chooser) + ' 님이 색을 고르는 중 · ' + sec + '초';
+      matchPlayers.textContent = '';
+      startCountTimer();
+      return;
+    }
+
+    if (state === 'playing') {
+      matchState.textContent = seatLeftTimer ? '상대 접속 끊김 — 기다리는 중' : '대국 중';
+      matchPlayers.textContent = '흑 ' + seatName(match.black) + ' · 백 ' + seatName(match.white);
+      stopCountTimer();
+      return;
+    }
+
+    if (state === 'ended') {
+      matchState.textContent = match.result || '대국 종료';
+      matchPlayers.textContent = '흑 ' + seatName(match.black) + ' · 백 ' + seatName(match.white);
+      stopCountTimer();
+      return;
+    }
+
+    if (state === 'counting') {
+      const left = Math.max(0, COUNTDOWN_MS - (serverNow() - (match.countStart || 0)));
+      matchState.textContent = '';
+      matchState.appendChild(document.createTextNode('시작까지 '));
+      const sec = document.createElement('span');
+      sec.className = 'sec';
+      sec.textContent = Math.ceil(left / 1000) + '초';
+      matchState.appendChild(sec);
+      readyBtn.textContent = '취소';
+      readyBtn.disabled = !mine;
+      startCountTimer();
+    } else {
+      matchState.textContent = '대기 중 · ' + list.length + '/' + SEATS + ' 준비';
+      readyBtn.textContent = mine ? '취소' : '준비완료';
+
+      readyBtn.disabled = !mine && list.length >= SEATS;
+      stopCountTimer();
+    }
+
+    matchPlayers.textContent = list.length
+      ? '준비: ' + list.map(id => seatName(id)).join(', ')
+      : '';
+  }
+
+  function startCountTimer() {
+    if (countTimer) return;
+    countTimer = setInterval(() => {
+      renderMatch();
+      checkCountdown();
+    }, 200);
+  }
+
+  function stopCountTimer() {
+    if (!countTimer) return;
+    clearInterval(countTimer);
+    countTimer = null;
+  }
+
+  readyBtn.addEventListener('click', toggleReady);
+  pickBlackBtn.addEventListener('click', () => pickColor(1));
+  pickWhiteBtn.addEventListener('click', () => pickColor(2));
+  matchOkBtn.addEventListener('click', () => {
+    resetMatch();
+
+    resetGame(true);
+    saveSession();
+  });
+
+  function openNickModal() {
+    loadNick();
+    nickModalInput.value = nickInput.value;
+    nickModal.hidden = false;
+    nickModalInput.focus();
+    nickModalInput.select();
+  }
+
+  function cancelNickModal() {
+    nickModal.hidden = true;
+    onlineCheck.checked = false;
+  }
+
+  function confirmNickModal() {
+    nickInput.value = nickModalInput.value.trim().slice(0, 12);
+    if (!nickInput.value) nickInput.value = getNick();
+    try { localStorage.setItem(NICK_KEY, getNick()); } catch (e) {  }
+    nickModal.hidden = true;
+    connectOnline();
+  }
+
+  nickOkBtn.addEventListener('click', confirmNickModal);
+  nickCancelBtn.addEventListener('click', cancelNickModal);
+  nickModalInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmNickModal(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancelNickModal(); }
+  });
+
+  nickModal.addEventListener('click', e => {
+    if (e.target === nickModal) cancelNickModal();
+  });
+
+  function adminWipe(path, label, after) {
+    if (!window.confirm(label + '?')) return;
+    const db = ensureDb();
+    if (!db) { adminMsg.textContent = '연결할 수 없음'; return; }
+    adminMsg.textContent = '지우는 중…';
+    db.ref(path).remove()
+      .then(() => {
+        adminMsg.textContent = label + ' 완료';
+        if (after) after();
+      })
+      .catch(() => { adminMsg.textContent = label + ' 실패'; });
+  }
+
+  if (new URLSearchParams(location.search).get('view') === 'admin') {
+    adminPanel.hidden = false;
+  }
+
+  document.getElementById('adminClearChatBtn').addEventListener('click', () => {
+
+    adminWipe(placePath(CHAT_PATH), '대화 초기화', clearChatLog);
+  });
+
+  document.getElementById('adminClearGameBtn').addEventListener('click', () => {
+
+    adminWipe(placePath(GAME_PATH), '판 초기화', () => {
+      resetGame(true);
+      saveSession();
+    });
+  });
+
+  document.getElementById('adminClearUsersBtn').addEventListener('click', () => {
+
+    adminWipe(placePath(USERS_PATH), '이름 목록 정리', () => {
+      nickMap = {};
+      refreshChatNames();
+      publishNick();
+    });
+  });
+
+  onlineCheck.addEventListener('change', () => {
+    if (onlineCheck.checked) openNickModal();
+    else disconnectOnline();
+  });
+
+  function saveSession() {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        seed,
+        intensity,
+        allowTangle: allowTangleCheck.checked,
+        moves: moveHistory.map(m => [m.i, m.j])
+      }));
+    } catch (e) {  }
+    pushState();
+  }
+
+  function restoreSession() {
+    let s = null;
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      s = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return false;
+    }
+    if (!s || typeof s.seed !== 'number' || typeof s.intensity !== 'number') return false;
+
+    allowTangleCheck.checked = !!s.allowTangle;
+    warpSlider.value = Math.round(s.intensity * 100);
+    warpVal.textContent = warpSlider.value + '%';
+    generateGrid(s.seed, s.intensity);
+    resetGame(true);
+
+    const moves = Array.isArray(s.moves) ? s.moves : [];
+    for (const mv of moves) {
+      if (!Array.isArray(mv)) continue;
+      const [i, j] = mv;
+      if (!Number.isInteger(i) || !Number.isInteger(j)) continue;
+      if (i < 0 || i >= N || j < 0 || j >= N) continue;
+      placeStone(i, j);
+    }
+    updateHud();
+    draw();
+    saveSession();
+    return true;
+  }
+
+  saveBoardBtn.addEventListener('click', saveCurrentBoard);
+  loadBoardBtn.addEventListener('click', loadSelectedBoard);
+  deleteBoardBtn.addEventListener('click', deleteSelectedBoard);
+
+  resetBtn.addEventListener('click', () => { resetGame(true); saveSession(); });
+  reshuffleBtn.addEventListener('click', () => { resetGame(false); saveSession(); });
+  undoBtn.addEventListener('click', undoMove);
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    zoom = Math.min(4, Math.round((zoom + 0.5) * 100) / 100);
+    applyZoom();
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    zoom = Math.max(1, Math.round((zoom - 0.5) * 100) / 100);
+    applyZoom();
+  });
+  document.getElementById('zoomResetBtn').addEventListener('click', () => {
+    zoom = 1;
+    applyZoom();
+    boardScroll.scrollLeft = 0;
+    boardScroll.scrollTop = 0;
+  });
+
+  warpSlider.addEventListener('input', () => {
+    const pct = Number(warpSlider.value);
+    warpVal.textContent = pct + '%';
+    generateGrid(seed, pct / 100);
+    draw();
+    saveSession();
+  });
+  warpVal.textContent = warpSlider.value + '%';
+
+  allowTangleCheck.addEventListener('change', () => {
+    generateGrid(seed, intensity);
+    draw();
+    saveSession();
+  });
+
+  loadNick();
+  refreshSavedList();
+  applyZoom();
+
+  if (!restoreSession()) resetGame(false);
+
+  (function restoreOnline() {
+    const invited = new URLSearchParams(location.search).get('room');
+    let wasOnline = false;
+    try { wasOnline = sessionStorage.getItem(SESSION_ONLINE_KEY) === '1'; } catch (e) {  }
+
+    if (!invited && !wasOnline) return;
+
+    onlineCheck.checked = true;
+    if (wasOnline) {
+
+      connectOnline();
+    } else {
+      openNickModal();
+    }
+  })();
+})();
+</script>
+</body>
+</html>
