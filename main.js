@@ -3,8 +3,8 @@
   loadBoardBtn.addEventListener('click', loadSelectedBoard);
   deleteBoardBtn.addEventListener('click', deleteSelectedBoard);
 
-  resetBtn.addEventListener('click', () => { resetGame(true); saveSession(); });
-  reshuffleBtn.addEventListener('click', () => { resetGame(false); saveSession(); });
+  resetBtn.addEventListener('click', () => { if (!canEditBoardControls()) return; resetGame(true); saveSession(); });
+  reshuffleBtn.addEventListener('click', () => { if (!canEditBoardControls()) return; resetGame(false); saveSession(); });
   undoBtn.addEventListener('click', undoMove);
   document.getElementById('zoomInBtn').addEventListener('click', () => {
     zoom = Math.min(ZOOM_MAX, Math.round((zoom + ZOOM_STEP) * 100) / 100);
@@ -22,6 +22,7 @@
   });
 
   warpSlider.addEventListener('input', () => {
+    if (!canEditBoardControls()) return;
     const pct = Number(warpSlider.value);
 
     warpVal.textContent = pct + '%';
@@ -32,6 +33,7 @@
   warpVal.textContent = warpSlider.value + '%';
 
   allowTangleCheck.addEventListener('change', () => {
+    if (!canEditBoardControls()) return;
     generateGrid(seed, intensity);
     draw();
     saveSession();

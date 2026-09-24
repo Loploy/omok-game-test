@@ -43,6 +43,7 @@
     wrap.append(input, document.createTextNode(' ' + modeText.name + (id === 'wave' ? '' : ' (' + UI_TEXT.pendingLabel + ')')));
     document.getElementById('modeChecks').append(wrap);
     input.addEventListener('change', () => {
+      if (!canEditBoardControls()) { renderModes(); return; }
       selectedModes = [...document.querySelectorAll('#modeChecks input:checked')].map(item => item.value);
       if (id === 'wave') {
         const strength = input.checked ? WAVE_DEFAULT_INTENSITY : 0;

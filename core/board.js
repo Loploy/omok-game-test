@@ -216,6 +216,7 @@ async function recolorMyStones(color) {
   }
 
   function undoMove() {
+    if (!canEditBoardControls()) return;
     if (moveHistory.length === 0) return;
     if (inPlay()) return;
     const last = moveHistory.pop();

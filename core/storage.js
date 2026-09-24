@@ -47,7 +47,7 @@
     }
     savedList.disabled = list.length === 0;
     refreshSavedMenu();
-    loadBoardBtn.disabled = list.length === 0;
+    loadBoardBtn.disabled = list.length === 0 || !canEditBoardControls();
     deleteBoardBtn.disabled = list.length === 0;
   }
 
@@ -72,6 +72,7 @@
   }
 
   function loadSelectedBoard() {
+    if (!canEditBoardControls()) return;
     const list = readSavedBoards();
     const target = list.find(b => b.id === savedList.value);
     if (!target) return;

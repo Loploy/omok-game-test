@@ -250,7 +250,7 @@ function renderMatchIntro() {
 
   function canPlace() {
     if (currentRoom && match && match.state !== 'idle' && match.state !== 'playing') return false;
-    if (!inPlay()) return true;
+    if (!inPlay()) return canEditBoardControls();
     if (serverNow() < (match.startedAt || 0) + MATCH_INTRO_MS) return false;
     if (match.turnStartedAt && serverNow() >= match.turnStartedAt + TURN_TIMEOUT_MS) return false;
     const me = getMyId();
@@ -258,16 +258,23 @@ function renderMatchIntro() {
     return turn === (me === match.black ? 1 : 2);
   }
 
+  function canEditBoardControls() {
+    if (!online || !currentRoom || !match) return true;
+    if (['playing', 'ended'].includes(match.state)) return false;
+    const preparing = readyList().length > 0 || ['counting', 'choosing'].includes(match.state);
+    return !preparing || isReady();
+  }
+
   function updateControlLock() {
 
-    const locked = inPlay() || (online && currentRoom && match && match.state === 'ended');
+    const locked = !canEditBoardControls();
     document.getElementById("modeOptions").disabled = locked;
     warpSlider.disabled = locked;
     allowTangleCheck.disabled = locked;
     undoBtn.disabled = locked;
     resetBtn.disabled = locked;
     reshuffleBtn.disabled = locked;
-    loadBoardBtn.disabled = locked;
+    loadBoardBtn.disabled = locked || savedList.disabled;
     saveBoardBtn.disabled = false;
   }
 
