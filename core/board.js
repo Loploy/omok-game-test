@@ -15,6 +15,7 @@ const WIN_LENGTH = 5;
   }
 
   function updateHud() {
+    turnText.parentElement.hidden = !inPlay();
     turnDot.className = 'dot ' + (turn === 1 ? 'black' : 'white');
     turnText.textContent = (turn === 1 ? '흑' : '백') + ' 차례';
   }
@@ -84,7 +85,11 @@ const WIN_LENGTH = 5;
           const r = SPACING * 0.27;
           ctx.beginPath();
           ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-          if (v === 1) {
+          const stone = moveHistory.find(move => move.i === i && move.j === j);
+          const color = stone?.color || (v === 1 ? 'black' : 'white');
+          if (color !== 'black' && color !== 'white') {
+            ctx.fillStyle = color;
+          } else if (color === 'black') {
             const g = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
             g.addColorStop(0, '#4a4c55');
             g.addColorStop(1, '#0f1013');
@@ -142,18 +147,18 @@ const WIN_LENGTH = 5;
     return null;
   }
 
-  function placeStone(i, j) {
+  function placeStone(i, j, player = turn, color = player === 1 ? 'black' : 'white') {
     if (gameOver || board[i][j] !== 0) return false;
-    board[i][j] = turn;
+    board[i][j] = player;
     lastMove = [i, j];
-    moveHistory.push({ i, j, player: turn });
-    const win = checkWin(i, j, turn);
+    moveHistory.push({ i, j, player, color });
+    const win = checkWin(i, j, player);
     if (win) {
       gameOver = true;
       winLine = win;
-      msg.textContent = (turn === 1 ? '흑' : '백') + ' 승리!';
+      msg.textContent = (typeof player === 'number' ? (player === 1 ? '선공' : '후공') : UI_TEXT.account.colors[color]) + ' 승리!';
     } else {
-      turn = turn === 1 ? 2 : 1;
+      if (typeof player === 'number') turn = player === 1 ? 2 : 1;
       updateHud();
     }
     return true;
@@ -169,7 +174,9 @@ const WIN_LENGTH = 5;
     const y = (clientY - rect.top) * scaleY;
     const node = findNearestNode(x, y);
     if (!node) return;
-    if (!placeStone(node[0], node[1])) return;
+    const player = inPlay() ? turn : 'user:' + getMyId();
+    const color = accountProfile?.stoneColor || DEFAULT_STONE_COLOR;
+    if (!placeStone(node[0], node[1], player, color)) return;
     draw();
     saveSession();
     syncMatchEnd();
@@ -180,7 +187,7 @@ const WIN_LENGTH = 5;
     if (inPlay()) return;
     const last = moveHistory.pop();
     board[last.i][last.j] = 0;
-    turn = last.player;
+    if (typeof last.player === 'number') turn = last.player;
     gameOver = false;
     winLine = null;
     msg.textContent = '';

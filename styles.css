@@ -543,3 +543,7 @@
 #settingsDialog input, #settingsDialog select { box-sizing: border-box; width: 100%; padding: 8px; }
 #settingsDialog .settings-actions { display: flex; gap: 8px; margin-top: 16px; }
 #accountMessage { min-height: 1.5em; font-size: 13px; }
+
+#colorChoices { display:flex; flex-wrap:wrap; gap:12px; padding:8px 3px; }
+.color-choice { width:32px; height:32px; border-radius:50%; border:1px solid #777; padding:0; }
+.color-choice[aria-pressed="true"] { outline:3px solid #383e70; outline-offset:3px; }

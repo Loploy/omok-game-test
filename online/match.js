@@ -158,6 +158,7 @@
   }
 
   function canPlace() {
+    if (currentRoom && match && match.state !== 'idle' && match.state !== 'playing') return false;
     if (!inPlay()) return true;
     const me = getMyId();
     if (me !== match.black && me !== match.white) return false;
@@ -182,6 +183,7 @@
   }
 
   function renderMatch() {
+    updateHud();
     const inRoom = !!currentRoom;
     matchPanel.hidden = !inRoom;
     if (!inRoom || !match) {

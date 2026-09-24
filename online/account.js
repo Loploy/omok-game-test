@@ -44,6 +44,7 @@ function renderAccount() {
     document.getElementById('profileNickname').value = accountProfile.nickname;
     document.getElementById('profileColor').value = accountProfile.stoneColor;
   }
+  renderColorChoices();
 }
 
 async function applyAccountUser(user) {
@@ -119,6 +120,7 @@ async function saveAccountProfile() {
     nickInput.value = profile.nickname;
     publishNick();
     document.getElementById('accountMessage').textContent = UI_TEXT.account.saved;
+    document.getElementById('settingsDialog').close();
   } catch (error) {
     if (revision === accountRevision) showAccountError(error);
   } finally {
@@ -137,6 +139,18 @@ function initializeAccount() {
     option.value = color;
     option.textContent = text.colors[color];
     document.getElementById('profileColor').append(option);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'color-choice';
+    button.style.backgroundColor = color;
+    button.dataset.color = color;
+    button.title = text.colors[color];
+    button.setAttribute('aria-label', text.colors[color]);
+    button.addEventListener('click', () => {
+      document.getElementById('profileColor').value = color;
+      renderColorChoices();
+    });
+    document.getElementById('colorChoices').append(button);
   }
   const dialog = document.getElementById('settingsDialog');
   document.getElementById('settingsBtn').addEventListener('click', () => {
@@ -156,4 +170,12 @@ function initializeAccount() {
   }
   accountAuth = firebase.app('omok-game-' + ENVIRONMENT).auth();
   accountAuth.onAuthStateChanged(applyAccountUser, showAccountError);
+}
+
+function renderColorChoices() {
+  document.querySelectorAll('.color-choice').forEach(button => {
+    const selected = button.dataset.color === document.getElementById('profileColor').value;
+    button.setAttribute('aria-pressed', String(selected));
+    button.disabled = !accountReady || accountBusy;
+  });
 }

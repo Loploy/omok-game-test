@@ -22,7 +22,8 @@
   <label id="nicknameLabel" for="profileNickname">닉네임</label>
   <input id="profileNickname" maxlength="12" autocomplete="nickname">
   <label id="colorLabel" for="profileColor">기본 돌 색</label>
-  <select id="profileColor"></select>
+  <select id="profileColor" hidden></select>
+  <div id="colorChoices" role="group" aria-labelledby="colorLabel"></div>
   <p id="accountMessage" role="status"></p>
   <div class="settings-actions"><button id="profileSaveBtn" type="button">저장</button><button id="settingsCloseBtn" type="button">닫기</button></div>
 </dialog>
