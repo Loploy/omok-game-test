@@ -552,7 +552,7 @@
 <body>
 <div class="wrap">
   <div class="main-col">
-  <header><h1>오목</h1><p>로비에서 함께 두거나 방을 만들어 경기하세요.</p></header>
+  <header><h1 id="gameTitle"></h1></header>
   <div class="turn">
     <span class="dot" id="turnDot"></span>
     <span id="turnText">흑 차례</span>
@@ -598,25 +598,24 @@
 
   <div class="side">
   <fieldset id="modeOptions" style="border:1px solid #b8b6ad;border-radius:10px;padding:14px;margin:0 0 16px">
-    <legend>모드 · 여러 개 선택 가능</legend>
+    <legend id="modeHeading"></legend>
     <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
     <section id="modeSettings" hidden>
-      <h3 style="font-size:14px">선택한 모드 설정</h3>
+      <h3 id="settingsHeading" style="font-size:14px"></h3>
       <div data-mode-settings="wave" hidden>
-        <strong>웨이브</strong>
+        <strong id="waveHeading"></strong>
   <div class="warp-control">
-    <label for="warpSlider">삐뚤빼뚤 정도</label>
+    <label for="warpSlider" id="waveIntensityLabel"></label>
     <input type="range" id="warpSlider" min="0" max="100" value="0" step="1" />
     <span class="val" id="warpVal">0%</span>
   </div>
   <div class="warp-control">
-    <label for="allowTangleCheck">위치 꼬임 허용</label>
+    <label for="allowTangleCheck" id="waveTangleLabel"></label>
     <input type="checkbox" id="allowTangleCheck" />
   </div>
 
       </div>
     </section>
-    <p style="font-size:12px">준비 중인 모드는 선택만 저장되며 게임에는 아직 적용되지 않습니다.</p>
   </fieldset>
   <div class="room" id="roomPanel" hidden>
     <div class="room-head">
@@ -698,6 +697,7 @@
   </div>
 </div>
 
+<script src="ui-text.js"></script>
 <script>
 (function () {
 
@@ -713,11 +713,18 @@
   const ENVIRONMENT = resolveEnvironment(location);
 
   const STORAGE_PREFIX = ENVIRONMENT === 'production' ? 'wave-omok:' : 'omok-game:test:';
-  const MODE_OPTIONS = [['skill','스킬'],['wave','웨이브'],['3d','3D'],['fight','싸움'],['rps','가위바위보'],['disaster','자연재해'],['teams','n vs n'],['blind','블라인드'],['moving','판 움직임'],['multi-stone','돌 n개씩']];
+  const UI_TEXT = window.OMOK_UI_TEXT;
+  const MODE_OPTIONS = ['skill', 'wave', '3d', 'fight', 'rps', 'disaster', 'teams', 'blind', 'moving', 'multi-stone'];
+  document.title = UI_TEXT.title;
+  for (const [id, text] of Object.entries({ gameTitle: UI_TEXT.title, modeHeading: UI_TEXT.modeHeading,
+    settingsHeading: UI_TEXT.settingsHeading, waveHeading: UI_TEXT.modes.wave.name,
+    waveIntensityLabel: UI_TEXT.waveIntensity, waveTangleLabel: UI_TEXT.waveTangle })) {
+    document.getElementById(id).textContent = text;
+  }
   let selectedModes = [];
 
   function normalizeModes(value, strength) {
-    return MODE_OPTIONS.map(item => item[0]).filter(id => Array.isArray(value) ? value.includes(id) : id === 'wave' && strength > 0);
+    return MODE_OPTIONS.filter(id => Array.isArray(value) ? value.includes(id) : id === 'wave' && strength > 0);
   }
 
   function renderModes() {
@@ -726,11 +733,16 @@
     panels.forEach(panel => { panel.hidden = !selectedModes.includes(panel.dataset.modeSettings); });
     document.getElementById('modeSettings').hidden = !panels.some(panel => !panel.hidden);
   }
-  for (const [id, label] of MODE_OPTIONS) {
+  for (const id of MODE_OPTIONS) {
+    const modeText = UI_TEXT.modes[id];
     const wrap = document.createElement('label');
     const input = document.createElement('input');
     input.type = 'checkbox'; input.value = id;
-    wrap.append(input, document.createTextNode(' ' + label + (id === 'wave' ? '' : ' (준비 중)')));
+    const description = modeText.description + (id === 'wave' ? '' : ' ' + UI_TEXT.pendingDescription);
+    wrap.title = description;
+    input.title = description;
+    input.setAttribute('aria-description', description);
+    wrap.append(input, document.createTextNode(' ' + modeText.name + (id === 'wave' ? '' : ' (' + UI_TEXT.pendingLabel + ')')));
     document.getElementById('modeChecks').append(wrap);
     input.addEventListener('change', () => {
       selectedModes = [...document.querySelectorAll('#modeChecks input:checked')].map(item => item.value);
