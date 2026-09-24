@@ -12,7 +12,7 @@ function matchColor(id) {
 function renderMatchColors() {
   const dialog = document.getElementById('matchColorDialog');
   const active = currentRoom && match?.state === 'choosing' && isReady();
-  if (!active) { if (dialog.open) dialog.close(); matchColorRenderKey = ''; return; }
+  if (!active) { if (dialog.open) dialog.close(); matchColorRenderKey = ''; document.getElementById('matchStartError').textContent = ''; return; }
   const key = match.chooseStart + ':' + matchColor(getMyId());
   if (key !== matchColorRenderKey) {
     matchColorRenderKey = key;
@@ -138,7 +138,7 @@ function renderMatchIntro() {
     try {
     await ref.parent.once('value');
     if (ref !== matchRef) return;
-    await ref.parent.transaction(room => {
+    const result = await ref.parent.transaction(room => {
       const current = room?.match;
       if (current?.state !== 'choosing' || serverNow() - current.chooseStart < CHOOSE_MS) return;
       const players = Object.keys(current.ready || {});
@@ -148,7 +148,14 @@ function renderMatchIntro() {
         black: players[firstIndex], white: players[(firstIndex + 1) % SEATS] };
       return room;
     }, undefined, false);
-    } catch (error) { roomMsg.textContent = '경기 시작 실패: ' + (error.code || error.message); }
+    if (!result.committed && match?.state === 'choosing') {
+      document.getElementById('matchStartError').textContent = '시작 조건 확인 실패: 상태=' + (result.snapshot.val()?.match?.state || '없음') + ', 준비=' + Object.keys(result.snapshot.val()?.match?.ready || {}).length;
+    }
+    } catch (error) {
+      const message = '경기 시작 실패: ' + (error.code || error.message);
+      roomMsg.textContent = message;
+      document.getElementById('matchStartError').textContent = message;
+    }
     finally { matchOperationBusy = false; }
   }
 
