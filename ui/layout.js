@@ -23,25 +23,12 @@ function setBoardFocus(active) {
   boardFocusBtn.focus();
 }
 
-async function toggleBoardFocus() {
-  if (boardFocusActive) {
-    setBoardFocus(false);
-    if (document.fullscreenElement === boardView) {
-      try { await document.exitFullscreen(); } catch (e) {  }
-    }
-    return;
-  }
-  setBoardFocus(true);
-  if (boardView.requestFullscreen) {
-    try { await boardView.requestFullscreen(); } catch (e) {  }
-  }
+function toggleBoardFocus() {
+  setBoardFocus(!boardFocusActive);
 }
 
 boardFocusBtn.textContent = UI_TEXT.boardView.open;
 boardFocusBtn.addEventListener('click', toggleBoardFocus);
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement && boardFocusActive) setBoardFocus(false);
-});
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && boardFocusActive) {
     event.preventDefault();

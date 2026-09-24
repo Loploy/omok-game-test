@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=layout-2">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -58,25 +58,15 @@
       <button id="roomCopyBtn">링크 복사</button>
     </div>
 
-    <div class="match" id="matchPanel" hidden>
-      <div class="match-head">
-        <span class="match-state" id="matchState">대기 중</span>
-        <button id="pickBlackBtn" hidden>선공</button>
-        <button id="pickWhiteBtn" hidden>후공</button>
-        <button id="matchOkBtn" class="primary" hidden>확인</button>
-        <button id="readyBtn">준비완료</button>
-      </div>
-      <div id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
-      <div class="match-players" id="matchPlayers"></div>
-    </div>
-
     <div class="room-msg" id="roomMsg"></div>
   </div>
 
   <fieldset id="modeOptions" style="border:1px solid #b8b6ad;border-radius:10px;padding:14px;margin:0 0 16px">
     <legend id="modeHeading"></legend>
     <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
-    <section id="modeSettings" hidden>
+
+  </fieldset>
+    <fieldset id="modeSettings" hidden>
       <h3 id="settingsHeading" style="font-size:14px"></h3>
       <div data-mode-settings="wave" hidden>
         <strong id="waveHeading"></strong>
@@ -91,11 +81,10 @@
   </div>
 
       </div>
-    </section>
-  </fieldset>
+    </fieldset>
   </aside>
   <main class="main-col" id="boardView">
-  <header><h1 id="gameTitle"></h1><button id="boardFocusBtn" type="button" aria-pressed="false"></button></header>
+  <header><h1 id="gameTitle"></h1></header>
   <div class="turn">
     <span class="dot" id="turnDot"></span>
     <span id="turnText">흑 차례</span>
@@ -107,6 +96,20 @@
     </div>
   </div>
 
+  <div class="board-actions">
+    <div class="match" id="matchPanel" hidden>
+      <div class="match-head">
+        <span class="match-state" id="matchState">대기 중</span>
+        <button id="pickBlackBtn" hidden>선공</button>
+        <button id="pickWhiteBtn" hidden>후공</button>
+        <button id="matchOkBtn" class="primary" hidden>확인</button>
+        <button id="readyBtn">준비완료</button>
+      </div>
+      <div id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
+      <div class="match-players" id="matchPlayers"></div>
+    </div>
+  <button id="boardFocusBtn" type="button" aria-pressed="false"></button>
+  </div>
   <div class="zoom-row">
     <div class="zoom-group">
       <button id="zoomOutBtn" title="축소">−</button>
@@ -192,7 +195,7 @@
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
 <script src="online/account.js"></script>
-<script src="ui/layout.js"></script>
+<script src="ui/layout.js?v=layout-2"></script>
 <script src="main.js"></script>
 </body>
 </html>
