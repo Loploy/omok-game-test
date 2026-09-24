@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=layout-2">
+<link rel="stylesheet" href="styles.css?v=layout-3">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -84,7 +84,11 @@
     </fieldset>
   </aside>
   <main class="main-col" id="boardView">
-  <header><h1 id="gameTitle"></h1></header>
+  <header><h1 id="gameTitle"></h1>  <div class="warp-control connection-status">
+    <span>접속 상태</span>
+    <input type="checkbox" id="onlineCheck" hidden checked />
+    <span class="val" id="onlineStatus">꺼짐</span>
+  </div></header>
   <div class="turn">
     <span class="dot" id="turnDot"></span>
     <span id="turnText">흑 차례</span>
@@ -118,25 +122,21 @@
     </div>
     <button id="zoomResetBtn">원래 크기</button>
     <button id="undoBtn" class="undo-btn">↩ 한 수 무르기</button>
-  </div>
-
-  <div class="warp-control connection-status">
-    <span>접속 상태</span>
-    <input type="checkbox" id="onlineCheck" hidden checked />
-    <span class="val" id="onlineStatus">꺼짐</span>
-  </div>
-
-  <div class="hud">
-    <div class="msg" id="msg"></div>
     <div class="btns">
       <button id="resetBtn">다시 시작 (같은 판)</button>
       <button id="reshuffleBtn" class="primary">새 판</button>
     </div>
   </div>
 
+  <div class="hud">
+    <div class="msg" id="msg"></div>
+
+  </div>
+
   <div class="save-row">
     <button id="saveBoardBtn">＋ 이 판 저장</button>
-    <select id="savedList" aria-label="저장한 판 목록"></select>
+    <select id="savedList" aria-label="저장한 판 목록" hidden></select>
+    <button id="savedMenuBtn" type="button" aria-expanded="false" aria-controls="savedMenu">저장한 판 없음</button>
     <button id="loadBoardBtn">불러오기</button>
     <button id="deleteBoardBtn" class="danger">삭제</button>
   </div>
@@ -170,6 +170,7 @@
 
 </div>
 
+<div id="savedMenu" hidden aria-label="저장한 판 목록"></div>
 <div class="modal-back" id="nickModal" hidden>
   <div class="modal">
     <div class="modal-title">닉네임 입력</div>
@@ -186,7 +187,7 @@
 <script src="modes/wave.js"></script>
 <script src="core/board.js"></script>
 <script src="core/input.js"></script>
-<script src="core/storage.js"></script>
+<script src="core/storage.js?v=layout-3"></script>
 <script src="online/connection.js"></script>
 <script src="online/chat.js"></script>
 <script src="online/sync.js"></script>
@@ -195,7 +196,7 @@
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
 <script src="online/account.js"></script>
-<script src="ui/layout.js?v=layout-2"></script>
+<script src="ui/layout.js?v=layout-3"></script>
 <script src="main.js"></script>
 </body>
 </html>

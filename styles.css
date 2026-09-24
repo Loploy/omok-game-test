@@ -566,3 +566,16 @@ body.board-focus #boardView { position: fixed; inset: 0; z-index: 100; backgroun
 body.board-focus #boardView > header, body.board-focus #boardView > .connection-status, body.board-focus #boardView > .hud, body.board-focus #boardView > .save-row, body.board-focus #matchPanel { display: none; }
 body.board-focus #boardView .board-frame { width: min(calc(100vw - 20px), calc(100dvh - 110px)); max-width: none; flex-shrink: 0; }
 body.board-focus #boardView .zoom-row, body.board-focus #boardView .board-actions { flex-shrink: 0; }
+
+.main-col .board-frame { max-width: 100%; }
+.main-col header { align-items: center; margin-bottom: 4px; }
+.main-col header .connection-status { margin: 0; gap: 5px; font-size: 10px; opacity: .7; }
+.main-col header .connection-status .val { font-size: inherit; }
+.main-col .zoom-row { justify-content: flex-start; flex-wrap: wrap; }
+.main-col .zoom-row .btns { margin-left: auto; }
+.main-col .hud:has(.msg:empty) { display: none; }
+.main-col .save-row { padding-top: 6px; }
+#savedMenuBtn { flex: 1; min-width: 90px; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+#savedMenu { position: fixed; z-index: 80; overflow: auto; padding: 4px; background: #fffdf9; border: 1px solid #c9c3b0; border-radius: 7px; box-shadow: 0 -4px 18px #0002; }
+#savedMenu button { display: block; width: 100%; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+#savedMenu button:hover, #savedMenu button:focus { background: #e6e8f2; }

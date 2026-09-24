@@ -46,6 +46,7 @@
       }
     }
     savedList.disabled = list.length === 0;
+    refreshSavedMenu();
     loadBoardBtn.disabled = list.length === 0;
     deleteBoardBtn.disabled = list.length === 0;
   }
@@ -66,6 +67,7 @@
     if (!writeSavedBoards(list)) return;
     refreshSavedList();
     savedList.value = list[list.length - 1].id;
+    refreshSavedMenu();
     msg.textContent = '"' + name + '" 저장함';
   }
 
@@ -92,3 +94,54 @@
     msg.textContent = '"' + target.name + '" 삭제함';
   }
 
+function refreshSavedMenu() {
+  const button = document.getElementById('savedMenuBtn');
+  button.textContent = (savedList.selectedOptions[0]?.textContent || '저장한 판 없음') + ' ▴';
+  button.disabled = savedList.disabled;
+  closeSavedMenu();
+}
+
+function closeSavedMenu() {
+  document.getElementById('savedMenu').hidden = true;
+  document.getElementById('savedMenuBtn').setAttribute('aria-expanded', 'false');
+}
+
+function openSavedMenu() {
+  const menu = document.getElementById('savedMenu');
+  const trigger = document.getElementById('savedMenuBtn');
+  if (!menu.hidden) { closeSavedMenu(); return; }
+  menu.replaceChildren();
+  for (const option of savedList.options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = option.textContent;
+    button.addEventListener('click', () => {
+      savedList.value = option.value;
+      refreshSavedMenu();
+      trigger.focus();
+    });
+    menu.append(button);
+  }
+  const rect = trigger.getBoundingClientRect();
+  menu.style.left = rect.left + 'px';
+  menu.style.width = rect.width + 'px';
+  menu.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+  menu.style.maxHeight = Math.max(0, rect.top - 12) + 'px';
+  menu.hidden = false;
+  trigger.setAttribute('aria-expanded', 'true');
+  menu.querySelector('button')?.focus();
+}
+document.getElementById('savedMenuBtn').addEventListener('click', openSavedMenu);
+document.addEventListener('click', event => {
+  if (!event.target.closest('#savedMenu, #savedMenuBtn')) closeSavedMenu();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !document.getElementById('savedMenu').hidden) {
+    closeSavedMenu();
+    document.getElementById('savedMenuBtn').focus();
+  }
+});
+window.addEventListener('resize', closeSavedMenu);
+document.addEventListener('scroll', event => {
+  if (event.target !== document.getElementById('savedMenu')) closeSavedMenu();
+}, true);
