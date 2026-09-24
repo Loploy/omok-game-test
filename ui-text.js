@@ -1,6 +1,5 @@
-// 화면 문구 편집용 파일임. 따옴표 안의 값만 수정하면 됨
-// modes의 키는 저장 데이터 식별자이므로 이름을 바꾸지 않음
-// 미구현 모드 설명은 임시 문구임. 규칙 확정 후 description 수정 가능함
+
+
 window.OMOK_UI_TEXT = {
   title: '오목',
   modeHeading: '모드',
