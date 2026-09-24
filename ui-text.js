@@ -1,6 +1,22 @@
 
 
 window.OMOK_UI_TEXT = {
+  account: {
+    settingsBtn: '설정', settingsTitle: '설정', googleLoginBtn: 'Google 로그인', logoutBtn: '로그아웃',
+    nicknameLabel: '닉네임', colorLabel: '기본 돌 색', profileSaveBtn: '저장', settingsCloseBtn: '닫기',
+    guest: '손님 · 이 브라우저에 저장', signedIn: 'Google 계정 · 계정에 저장', saved: '저장됨',
+    leaveRoom: '로그인·로그아웃은 로비에서 가능합니다.', nicknameRequired: '닉네임을 입력해주세요.',
+    colors: { black: '검정', white: '흰색', red: '빨강', orange: '주황', yellow: '노랑', green: '초록', blue: '파랑', purple: '보라' },
+    errors: {
+      'auth/operation-not-allowed': 'Firebase에서 Google 로그인을 활성화해주세요.',
+      'auth/unauthorized-domain': 'Firebase 승인된 도메인에 현재 사이트를 추가해주세요.',
+      'auth/popup-blocked': '팝업 허용 후 다시 로그인해주세요.',
+      'auth/popup-closed-by-user': '로그인을 취소했습니다.',
+      'PERMISSION_DENIED': '계정 저장 권한이 없습니다. 테스트 DB의 profiles 규칙을 확인해주세요.',
+      'auth/network-request-failed': '인터넷 연결을 확인해주세요.',
+      default: '처리하지 못했습니다. 연결과 Firebase 설정을 확인 후 다시 시도해주세요.'
+    }
+  },
   title: '오목',
   modeHeading: '모드',
   settingsHeading: '모드 설정',

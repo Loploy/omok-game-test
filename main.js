@@ -44,5 +44,5 @@
   if (!restoreSession()) resetGame(false);
 
   onlineCheck.checked = true;
-  connectOnline();
+  initializeAccount();
 

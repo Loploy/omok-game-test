@@ -108,7 +108,7 @@
       const myName = nickMap[getMyId()];
       if (myName && myName !== nickInput.value) {
         nickInput.value = myName;
-        try { localStorage.setItem(NICK_KEY, myName); } catch (e) {  }
+        try { if (!accountUser) localStorage.setItem(NICK_KEY, myName); } catch (e) {  }
       }
     }, () => {  });
 

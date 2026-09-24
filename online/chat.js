@@ -2,6 +2,7 @@
 
   let myId = null;
   function getMyId() {
+    if (accountUser) return accountUser.uid;
     if (myId) return myId;
     const gen = () => Math.random().toString(36).slice(2, 10);
     try {
@@ -44,7 +45,7 @@
   }
 
   window.addEventListener('storage', e => {
-    if (e.key !== NICK_KEY || !e.newValue) return;
+    if (accountUser || e.key !== NICK_KEY || !e.newValue) return;
     nickInput.value = e.newValue.slice(0, 12);
   });
 

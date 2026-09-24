@@ -9,9 +9,23 @@
 
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle">
+  <h2 id="settingsTitle">설정</h2>
+  <p id="accountStatus"></p>
+  <button id="googleLoginBtn" type="button">Google 로그인</button>
+  <button id="logoutBtn" type="button" hidden>로그아웃</button>
+  <label id="nicknameLabel" for="profileNickname">닉네임</label>
+  <input id="profileNickname" maxlength="12" autocomplete="nickname">
+  <label id="colorLabel" for="profileColor">기본 돌 색</label>
+  <select id="profileColor"></select>
+  <p id="accountMessage" role="status"></p>
+  <div class="settings-actions"><button id="profileSaveBtn" type="button">저장</button><button id="settingsCloseBtn" type="button">닫기</button></div>
+</dialog>
 <div class="wrap">
   <div class="main-col">
   <header><h1 id="gameTitle"></h1></header>
@@ -172,6 +186,7 @@
 <script src="online/match.js"></script>
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
+<script src="online/account.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
