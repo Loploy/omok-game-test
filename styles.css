@@ -563,7 +563,7 @@
 body.board-focus { overflow: hidden; }
 body.board-focus .left-col, body.board-focus .chat-col, body.board-focus #settingsBtn { display: none; }
 body.board-focus #boardView { position: fixed; inset: 0; z-index: 100; background: #e9e6de; padding: 10px; overflow: auto; display: flex; flex-direction: column; align-items: center; }
-body.board-focus #boardView > header, body.board-focus #boardView > .connection-status, body.board-focus #boardView > .hud, body.board-focus #boardView > .save-row, body.board-focus #matchPanel { display: none; }
+body.board-focus #boardView > header, body.board-focus #boardView > .connection-status, body.board-focus #boardView > .hud, body.board-focus #boardView > .save-row { display: none; }
 body.board-focus #boardView .board-frame { width: min(calc(100vw - 20px), calc(100dvh - 110px)); max-width: none; flex-shrink: 0; }
 body.board-focus #boardView .zoom-row, body.board-focus #boardView .board-actions { flex-shrink: 0; }
 
@@ -597,3 +597,8 @@ body.board-focus #boardView .zoom-row, body.board-focus #boardView .board-action
 #matchResultDialog { text-align: center; padding: 40px; max-width: 90vw; border: 1px solid #c9c3b0; border-radius: 12px; background: var(--paper); color: var(--ink); }
 #matchResultText { font-size: clamp(24px, 4vw, 48px); }
 #matchResultDialog::backdrop { background: #0006; }
+
+body.board-focus #matchPanel .match-head > button,
+body.board-focus #matchPanel .match-players { display: none; }
+body.board-focus #boardView .board-actions { gap: 16px; }
+body.board-focus #matchState { white-space: nowrap; }
