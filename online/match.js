@@ -130,15 +130,28 @@ function renderMatchIntro() {
     if (match.state === 'choosing' && serverNow() - match.chooseStart >= CHOOSE_MS) startRandomMatch();
   }
 
+  async function transactMatchRoom(ref, update) {
+    const roomRef = ref.parent;
+    let handler;
+    try {
+      await new Promise((resolve, reject) => {
+        handler = snapshot => resolve(snapshot);
+        roomRef.on('value', handler, reject);
+      });
+      if (ref !== matchRef) return null;
+      return await roomRef.transaction(update, undefined, false);
+    } finally {
+      if (handler) roomRef.off('value', handler);
+    }
+  }
+
   async function startRandomMatch() {
     if (!matchRef || matchOperationBusy) return;
     matchOperationBusy = true;
     const ref = matchRef;
     const firstIndex = Math.floor(Math.random() * SEATS);
     try {
-    await ref.parent.once('value');
-    if (ref !== matchRef) return;
-    const result = await ref.parent.transaction(room => {
+    const result = await transactMatchRoom(ref, room => {
       const current = room?.match;
       if (current?.state !== 'choosing' || serverNow() - current.chooseStart < CHOOSE_MS) return;
       const players = Object.keys(current.ready || {});
@@ -147,8 +160,8 @@ function renderMatchIntro() {
       room.match = { ...current, state: 'playing', startedAt: serverNow(), turnStartedAt: serverNow() + MATCH_INTRO_MS, ply: 0, winner: null, result: null, chooseStart: null,
         black: players[firstIndex], white: players[(firstIndex + 1) % SEATS] };
       return room;
-    }, undefined, false);
-    if (!result.committed && match?.state === 'choosing') {
+    });
+    if (result && !result.committed && match?.state === 'choosing') {
       document.getElementById('matchStartError').textContent = '시작 조건 확인 실패: 상태=' + (result.snapshot.val()?.match?.state || '없음') + ', 준비=' + Object.keys(result.snapshot.val()?.match?.ready || {}).length;
     }
     } catch (error) {
@@ -381,9 +394,7 @@ async function submitMatchMove(i, j) {
   const ref = matchRef, me = getMyId(), startedAt = match.startedAt;
   matchOperationBusy = true;
   try {
-    await ref.parent.once('value');
-    if (ref !== matchRef) return;
-    await ref.parent.transaction(room => {
+    await transactMatchRoom(ref, room => {
       const current = room?.match;
       if (current?.state !== 'playing' || current.startedAt !== startedAt) return;
       const player = (current.ply || 0) % SEATS + 1;
@@ -400,7 +411,7 @@ async function submitMatchMove(i, j) {
         current.state = 'ended'; current.winner = me; current.result = seatName(me) + ' 승리!';
       }
       return room;
-    }, undefined, false);
+    });
   } catch (error) { roomMsg.textContent = '착수 실패: ' + (error.code || error.message); }
   finally { matchOperationBusy = false; }
 }
