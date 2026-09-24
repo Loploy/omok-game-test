@@ -118,6 +118,7 @@ async function saveAccountProfile() {
     if (revision !== accountRevision) return;
     accountProfile = profile;
     nickInput.value = profile.nickname;
+    recolorMyStones(profile.stoneColor);
     publishNick();
     document.getElementById('accountMessage').textContent = UI_TEXT.account.saved;
     document.getElementById('settingsDialog').close();

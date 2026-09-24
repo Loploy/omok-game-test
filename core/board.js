@@ -1,6 +1,26 @@
 
 const WIN_LENGTH = 5;
 
+function recolorMyStones(color) {
+  const me = getMyId();
+  const owner = 'user:' + me;
+  const hasSeats = currentRoom && match && (match.state === 'playing' || match.state === 'ended');
+  const seat = hasSeats ? (match.black === me ? 1 : match.white === me ? 2 : null) : null;
+  let changed = false;
+  for (const move of moveHistory) {
+    if ((move.player === owner || (seat !== null && move.player === seat)) && move.color !== color) {
+      move.color = color;
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  if (winLine && board[winLine[0][0]][winLine[0][1]] === owner) {
+    msg.textContent = UI_TEXT.account.colors[color] + ' 승리!';
+  }
+  draw();
+  saveSession();
+}
+
   function resetGame(keepGrid) {
     board = Array.from({ length: N }, () => Array(N).fill(0));
     turn = 1;
@@ -201,4 +221,3 @@ const WIN_LENGTH = 5;
     draw();
     saveSession();
   }
-
