@@ -1,9 +1,4 @@
 
-const WAVE_DEFAULT_INTENSITY = 0.6;
-const WAVE_PRIMARY_AMPLITUDE = 0.62;
-const WAVE_SECONDARY_AMPLITUDE = 0.26;
-const WAVE_PRIMARY_FREQUENCY = 0.55;
-const WAVE_SECONDARY_FREQUENCY = 1.25;
 
   function mulberry32(a) {
     return function () {
@@ -52,10 +47,6 @@ const WAVE_SECONDARY_FREQUENCY = 1.25;
     }
     return g;
   }
-
-  const TANGLE_MIN_GAP = SPACING * 0.16;
-  const DAMP_STEP = 0.93;
-  const MAX_REPAIR_ITER = 40;
 
   function sampleCurve(pts, steps) {
     const out = [];

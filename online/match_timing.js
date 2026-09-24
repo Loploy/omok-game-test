@@ -1,0 +1,8 @@
+
+const COUNTDOWN_MS = 5000;
+const CHOOSE_MS = 10000;
+const MATCH_INTRO_MS = 3000;
+const TURN_TIMEOUT_MS = 60000;
+const SEAT_GRACE_MS = 12000;
+const MATCH_TICK_MS = 200;
+

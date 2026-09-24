@@ -1,6 +1,4 @@
 
-const SEED_TIME_MODULUS = 100000;
-const SEED_RANDOM_RANGE = 1000;
 
   function resolveEnvironment(address) {
     const officialPath = address.pathname === '/omok-game'
@@ -15,7 +13,6 @@ const SEED_RANDOM_RANGE = 1000;
 
   const STORAGE_PREFIX = ENVIRONMENT === 'production' ? 'wave-omok:' : 'omok-game:test:';
   const UI_TEXT = window.OMOK_UI_TEXT;
-  const MODE_OPTIONS = ['skill', 'wave', '3d', 'fight', 'rps', 'disaster', 'teams', 'blind', 'moving', 'multi-stone'];
   document.title = UI_TEXT.title;
   for (const [id, text] of Object.entries({ gameTitle: UI_TEXT.title, modeHeading: UI_TEXT.modeHeading,
     settingsHeading: UI_TEXT.settingsHeading, waveHeading: UI_TEXT.modes.wave.name,
@@ -56,13 +53,8 @@ const SEED_RANDOM_RANGE = 1000;
       saveSession();
     });
   }
-  const N = 15;
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
-  const SIZE = 800;
-  const MARGIN = 46;
-  const SPACING = (SIZE - MARGIN * 2) / (N - 1);
-  const HIT_R = SPACING * 0.42;
 
   let grid = [];
   let board = [];

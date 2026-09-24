@@ -116,8 +116,12 @@
     }
   }
 
-  function goPlace(code) {
+  async function goPlace(code) {
     if (currentRoom === code) return;
+    if (inPlay() && [match.black, match.white].includes(getMyId())) {
+      try { await forfeitMatch(getMyId(), '퇴장 포기'); }
+      catch (error) { roomMsg.textContent = '포기 처리 실패. 다시 시도해 주세요'; return; }
+    }
     detachPlace();
     currentRoom = code;
     roomMsg.textContent = '';

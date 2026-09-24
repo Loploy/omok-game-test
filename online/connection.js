@@ -27,23 +27,11 @@
   const ROOM_LIST_PATH = 'roomList';
   const GAME_PATH = 'game';
   const CHAT_PATH = 'chat';
-  const CHAT_LIMIT = 50;
   const ME_KEY = STORAGE_PREFIX + 'me';
   const NICK_KEY = STORAGE_PREFIX + 'nick';
   const USERS_PATH = 'users';
 
-  const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  const CODE_LEN = 4;
-
-  const ROOM_GRACE_MS = 15000;
-  const ROOM_MAX_DEFAULT = 8;
-  const ROOM_MAX_LIMIT = 20;
   const MATCH_PATH = 'match';
-  const COUNTDOWN_MS = 5000;
-  const CHOOSE_MS = 10000;
-
-  const SEAT_GRACE_MS = 12000;
-  const SEATS = 2;
 
   const SESSION_ONLINE_KEY = STORAGE_PREFIX + 'session-online';
   const SESSION_ROOM_KEY = STORAGE_PREFIX + 'session-room';

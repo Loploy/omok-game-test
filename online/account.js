@@ -1,7 +1,4 @@
 
-const STONE_COLORS = ['black', 'white', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'];
-const DEFAULT_STONE_COLOR = STONE_COLORS[0];
-const PROFILE_NICK_MAX_LENGTH = 12;
 const GUEST_PROFILE_KEY = STORAGE_PREFIX + 'guest-profile';
 let accountUser = null;
 let accountAuth = null;

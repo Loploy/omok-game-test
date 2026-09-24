@@ -145,6 +145,8 @@
         match = {
           state: typeof raw.state === 'string' ? raw.state : 'idle',
           ready: raw.ready || {},
+          turnStartedAt: typeof raw.turnStartedAt === 'number' ? raw.turnStartedAt : 0,
+          ply: Number.isInteger(raw.ply) ? raw.ply : 0,
           startedAt: typeof raw.startedAt === 'number' ? raw.startedAt : 0,
           countStart: typeof raw.countStart === 'number' ? raw.countStart : 0,
           chooser: typeof raw.chooser === 'string' ? raw.chooser : '',
@@ -155,6 +157,7 @@
           result: typeof raw.result === 'string' ? raw.result : ''
         };
         renderMatch();
+        checkSeatLeft();
       }, () => { roomMsg.textContent = '대국 상태를 받지 못함'; });
     } else {
       match = null;
@@ -171,7 +174,7 @@
       meRef.remove().catch(() => {  });
     }
 
-    if (matchRef && isReady()) {
+    if (matchRef && isReady() && ['idle', 'counting', 'choosing'].includes(match?.state)) {
       const me = getMyId();
       matchRef.child('ready/' + me).remove().catch(() => {  });
       matchRef.update({ state: 'idle', countStart: null }).catch(() => {  });

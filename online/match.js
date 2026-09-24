@@ -1,5 +1,5 @@
 
-const MATCH_INTRO_MS = 3000;
+let matchOperationBusy = false;
 let matchColorRenderKey = '';
 let matchIntroTimer = null;
 let shownMatchIntro = '';
@@ -130,30 +130,39 @@ function renderMatchIntro() {
     if (match.state === 'choosing' && serverNow() - match.chooseStart >= CHOOSE_MS) startRandomMatch();
   }
 
-  function startRandomMatch() {
-    if (!matchRef) return;
+  async function startRandomMatch() {
+    if (!matchRef || matchOperationBusy) return;
+    matchOperationBusy = true;
+    const ref = matchRef;
     const firstIndex = Math.floor(Math.random() * SEATS);
-    matchRef.parent.transaction(room => {
+    try {
+    await ref.parent.once('value');
+    if (ref !== matchRef) return;
+    await ref.parent.transaction(room => {
       const current = room?.match;
       if (current?.state !== 'choosing' || serverNow() - current.chooseStart < CHOOSE_MS) return;
       const players = Object.keys(current.ready || {});
       if (players.length !== SEATS) return;
       if (room.game) room.game.moves = [];
-      room.match = { ...current, state: 'playing', startedAt: serverNow(), chooseStart: null,
+      room.match = { ...current, state: 'playing', startedAt: serverNow(), turnStartedAt: serverNow() + MATCH_INTRO_MS, ply: 0, winner: null, result: null, chooseStart: null,
         black: players[firstIndex], white: players[(firstIndex + 1) % SEATS] };
       return room;
-    });
+    }, undefined, false);
+    } catch (error) { roomMsg.textContent = '경기 시작 실패: ' + (error.code || error.message); }
+    finally { matchOperationBusy = false; }
   }
 
   function endMatch(result) {
     if (!matchRef || !match || match.state !== 'playing') return;
-    matchRef.update({ state: 'ended', result: result });
+    return matchRef.transaction(current => current?.state === 'playing' ? { ...current, state: 'ended', result } : undefined);
   }
 
   function syncMatchEnd() {
     if (!inPlay() || !gameOver) return;
 
-    endMatch(msg.textContent || '대국 종료');
+    if (match.turnStartedAt) return;
+    const winner = winLine && board[winLine[0][0]][winLine[0][1]] === 1 ? match.black : match.white;
+    endMatch(seatName(winner) + ' 승리!');
   }
 
   function resetMatch() {
@@ -166,7 +175,10 @@ function renderMatchIntro() {
       chooseStart: null,
       black: null,
       white: null,
-      result: null
+      result: null,
+      winner: null,
+      turnStartedAt: null,
+      ply: null
     });
   }
 
@@ -181,8 +193,8 @@ function renderMatchIntro() {
       seatLeftTimer = null;
       if (!inPlay()) return;
       if (nickMap[match.black] && nickMap[match.white]) return;
-      const gone = nickMap[match.black] ? seatName(match.white) : seatName(match.black);
-      endMatch((gone || '대국자') + ' 님이 나감');
+      const gone = nickMap[match.black] ? match.white : match.black;
+      forfeitMatch(gone, '연결 종료').catch(() => { roomMsg.textContent = '이탈 처리 실패'; });
     }, SEAT_GRACE_MS);
 
     renderMatch();
@@ -202,6 +214,7 @@ function renderMatchIntro() {
     if (currentRoom && match && match.state !== 'idle' && match.state !== 'playing') return false;
     if (!inPlay()) return true;
     if (serverNow() < (match.startedAt || 0) + MATCH_INTRO_MS) return false;
+    if (match.turnStartedAt && serverNow() >= match.turnStartedAt + TURN_TIMEOUT_MS) return false;
     const me = getMyId();
     if (me !== match.black && me !== match.white) return false;
     return turn === (me === match.black ? 1 : 2);
@@ -228,6 +241,8 @@ function renderMatchIntro() {
     updateHud();
     renderMatchColors();
     renderMatchIntro();
+    renderMatchResult();
+    document.getElementById('resignBtn').hidden = !inPlay() || ![match.black, match.white].includes(getMyId());
     const inRoom = !!currentRoom;
     matchPanel.hidden = !inRoom;
     if (!inRoom || !match) {
@@ -258,9 +273,9 @@ function renderMatchIntro() {
     }
 
     if (state === 'playing') {
-      matchState.textContent = seatLeftTimer ? '상대 접속 끊김 — 기다리는 중' : '대국 중';
+      matchState.textContent = '남은 시간 ' + Math.ceil(Math.max(0, (match.turnStartedAt || serverNow()) + TURN_TIMEOUT_MS - serverNow()) / 1000) + '초';
       matchPlayers.textContent = '선공 ' + seatName(match.black) + ' (' + UI_TEXT.account.colors[matchColor(match.black)] + ') · 후공 ' + seatName(match.white) + ' (' + UI_TEXT.account.colors[matchColor(match.white)] + ')';
-      stopCountTimer();
+      startCountTimer();
       return;
     }
 
@@ -300,7 +315,8 @@ function renderMatchIntro() {
     countTimer = setInterval(() => {
       renderMatch();
       checkCountdown();
-    }, 200);
+      checkTurnTimeout();
+    }, MATCH_TICK_MS);
   }
 
   function stopCountTimer() {
@@ -318,3 +334,78 @@ function renderMatchIntro() {
     saveSession();
   });
 
+async function forfeitMatch(loser, reason) {
+  if (!matchRef) return;
+  const startedAt = match?.startedAt;
+  return matchRef.transaction(current => {
+    if (current?.state !== 'playing' || current.startedAt !== startedAt || ![current.black, current.white].includes(loser)) return;
+    const winner = current.black === loser ? current.white : current.black;
+    return { ...current, state: 'ended', winner, result: seatName(winner) + ' 승리! (' + reason + ')' };
+  }, undefined, false);
+}
+
+async function checkTurnTimeout() {
+  if (!inPlay() || !match.turnStartedAt || serverNow() < match.turnStartedAt + TURN_TIMEOUT_MS || matchOperationBusy) return;
+  matchOperationBusy = true;
+  try {
+    await matchRef.transaction(current => {
+      if (current?.state !== 'playing' || !current.turnStartedAt || serverNow() < current.turnStartedAt + TURN_TIMEOUT_MS) return;
+      const winner = current.ply % SEATS === 0 ? current.white : current.black;
+      return { ...current, state: 'ended', winner, result: seatName(winner) + ' 승리! (시간 초과)' };
+    }, undefined, false);
+  } catch (error) { roomMsg.textContent = '시간 초과 처리 실패'; }
+  finally { matchOperationBusy = false; }
+}
+
+function matchMoveWins(moves, i, j, player) {
+  const cells = new Map(moves.map(move => [move[0] + ',' + move[1], move[2]]));
+  return [[0,1],[1,0],[1,1],[1,-1]].some(([di,dj]) => {
+    let count = 1;
+    for (const sign of [-1,1]) {
+      let x = i + di * sign, y = j + dj * sign;
+      while (cells.get(x + ',' + y) === player) { count++; x += di * sign; y += dj * sign; }
+    }
+    return count >= WIN_LENGTH;
+  });
+}
+
+async function submitMatchMove(i, j) {
+  if (!matchRef || matchOperationBusy) return;
+  const ref = matchRef, me = getMyId(), startedAt = match.startedAt;
+  matchOperationBusy = true;
+  try {
+    await ref.parent.once('value');
+    if (ref !== matchRef) return;
+    await ref.parent.transaction(room => {
+      const current = room?.match;
+      if (current?.state !== 'playing' || current.startedAt !== startedAt) return;
+      const player = (current.ply || 0) % SEATS + 1;
+      if ((player === 1 ? current.black : current.white) !== me) return;
+      const now = serverNow();
+      if (now < current.startedAt + MATCH_INTRO_MS || now >= current.turnStartedAt + TURN_TIMEOUT_MS) return;
+      const state = normalizeState(room.game);
+      if (!state || state.moves.some(move => move[0] === i && move[1] === j)) return;
+      state.moves.push([i, j, player, current.ready[me].color, me]);
+      room.game = { ...room.game, moves: state.moves };
+      current.ply = state.moves.length;
+      current.turnStartedAt = now;
+      if (matchMoveWins(state.moves, i, j, player)) {
+        current.state = 'ended'; current.winner = me; current.result = seatName(me) + ' 승리!';
+      }
+      return room;
+    }, undefined, false);
+  } catch (error) { roomMsg.textContent = '착수 실패: ' + (error.code || error.message); }
+  finally { matchOperationBusy = false; }
+}
+
+function renderMatchResult() {
+  const dialog = document.getElementById('matchResultDialog');
+  if (!currentRoom || match?.state !== 'ended') { if (dialog.open) dialog.close(); return; }
+  document.getElementById('matchResultText').textContent = match.result || '경기 종료';
+  if (!dialog.open) dialog.showModal();
+}
+document.getElementById('resignBtn').addEventListener('click', () => {
+  if (inPlay()) forfeitMatch(getMyId(), '포기').catch(() => { roomMsg.textContent = '포기 처리 실패'; });
+});
+document.getElementById('matchResultOkBtn').addEventListener('click', () => matchOkBtn.click());
+document.getElementById('matchResultDialog').addEventListener('cancel', event => event.preventDefault());

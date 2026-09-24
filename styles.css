@@ -593,3 +593,7 @@ body.board-focus #boardView .zoom-row, body.board-focus #boardView .board-action
 #matchIntro { position: fixed; inset: 0; z-index: 200; background: #e9e6deed; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; font-size: clamp(22px, 3vw, 44px); font-weight: 700; padding: 20px; }
 #matchIntro > div { display: flex; align-items: center; gap: 16px; }
 .intro-stone { display: inline-block; width: 48px; height: 48px; border: 1px solid #777; border-radius: 50%; flex-shrink: 0; }
+
+#matchResultDialog { text-align: center; padding: 40px; max-width: 90vw; border: 1px solid #c9c3b0; border-radius: 12px; background: var(--paper); color: var(--ink); }
+#matchResultText { font-size: clamp(24px, 4vw, 48px); }
+#matchResultDialog::backdrop { background: #0006; }

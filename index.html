@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=layout-5">
+<link rel="stylesheet" href="styles.css?v=match-6">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -106,6 +106,7 @@
         <button id="pickBlackBtn" hidden>선공</button>
         <button id="pickWhiteBtn" hidden>후공</button>
         <button id="matchOkBtn" class="primary" hidden>확인</button>
+        <button id="resignBtn" hidden>포기</button>
         <button id="readyBtn">준비완료</button>
       </div>
 
@@ -174,6 +175,7 @@
   <p id="matchColorTime"></p>
   <div id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
 </dialog>
+<dialog id="matchResultDialog"><h2 id="matchResultText"></h2><button id="matchResultOkBtn">확인</button></dialog>
 <div id="matchIntro" role="status" hidden></div>
 <div id="savedMenu" hidden aria-label="저장한 판 목록"></div>
 <div class="modal-back" id="nickModal" hidden>
@@ -187,21 +189,23 @@
   </div>
 </div>
 
-<script src="ui-text.js"></script>
-<script src="game_state.js"></script>
-<script src="modes/wave.js"></script>
-<script src="core/board.js?v=layout-5"></script>
-<script src="core/input.js"></script>
-<script src="core/storage.js?v=layout-5"></script>
-<script src="online/connection.js"></script>
-<script src="online/chat.js"></script>
-<script src="online/sync.js?v=layout-5"></script>
-<script src="online/room.js"></script>
-<script src="online/match.js?v=layout-5"></script>
-<script src="ui/panels.js"></script>
-<script src="core/session.js"></script>
-<script src="online/account.js"></script>
-<script src="ui/layout.js?v=layout-5"></script>
-<script src="main.js"></script>
+<script src="ui-text.js?v=match-constants-7"></script>
+<script src="constants.js?v=match-constants-7"></script>
+<script src="game_state.js?v=match-constants-7"></script>
+<script src="modes/wave.js?v=match-constants-7"></script>
+<script src="core/board.js?v=match-constants-7"></script>
+<script src="core/input.js?v=match-constants-7"></script>
+<script src="core/storage.js?v=match-constants-7"></script>
+<script src="online/match_timing.js?v=match-constants-7"></script>
+<script src="online/connection.js?v=match-constants-7"></script>
+<script src="online/chat.js?v=match-constants-7"></script>
+<script src="online/sync.js?v=match-constants-7"></script>
+<script src="online/room.js?v=match-constants-7"></script>
+<script src="online/match.js?v=match-constants-7"></script>
+<script src="ui/panels.js?v=match-constants-7"></script>
+<script src="core/session.js?v=match-constants-7"></script>
+<script src="online/account.js?v=match-constants-7"></script>
+<script src="ui/layout.js?v=match-constants-7"></script>
+<script src="main.js?v=match-constants-7"></script>
 </body>
 </html>

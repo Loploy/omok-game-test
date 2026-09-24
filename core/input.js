@@ -1,7 +1,4 @@
 
-const ZOOM_MIN = 1;
-const ZOOM_MAX = 4;
-const ZOOM_STEP = 0.5;
 
   function applyZoom() {
     canvas.style.width = (zoom * 100) + '%';
@@ -9,7 +6,6 @@ const ZOOM_STEP = 0.5;
     zoomVal.textContent = Math.round(zoom * 100) + '%';
   }
 
-  const DRAG_THRESHOLD = 6;
   const pointers = new Map();
   let dragMoved = false;
   let startX = 0, startY = 0, startScrollLeft = 0, startScrollTop = 0;

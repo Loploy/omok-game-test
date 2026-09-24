@@ -1,5 +1,4 @@
 
-const WIN_LENGTH = 5;
 
 async function recolorMyStones(color) {
   const me = getMyId();
@@ -207,6 +206,7 @@ async function recolorMyStones(color) {
     const y = (clientY - rect.top) * scaleY;
     const node = findNearestNode(x, y);
     if (!node) return;
+    if (inPlay()) { submitMatchMove(node[0], node[1]); return; }
     const player = inPlay() ? turn : 'user:' + getMyId();
     const color = inPlay() ? matchColor(getMyId()) : (accountProfile?.stoneColor || DEFAULT_STONE_COLOR);
     if (!placeStone(node[0], node[1], player, color, getMyId())) return;
