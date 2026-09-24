@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wave Omok</title>
+<title>오목 · 로비와 방</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -552,8 +552,7 @@
 <body>
 <div class="wrap">
   <div class="main-col">
-  <header>
-  </header>
+  <header><h1>오목</h1><p>로비에서 함께 두거나 방을 만들어 경기하세요.</p></header>
   <div class="turn">
     <span class="dot" id="turnDot"></span>
     <span id="turnText">흑 차례</span>
@@ -577,8 +576,8 @@
 
   <div class="warp-control">
     <label for="warpSlider">삐뚤빼뚤 정도</label>
-    <input type="range" id="warpSlider" min="0" max="100" value="60" step="1" />
-    <span class="val" id="warpVal">60%</span>
+    <input type="range" id="warpSlider" min="0" max="100" value="0" step="1" />
+    <span class="val" id="warpVal">0%</span>
   </div>
   <div class="warp-control">
     <label for="allowTangleCheck">위치 꼬임 허용</label>
@@ -586,8 +585,8 @@
   </div>
 
   <div class="warp-control">
-    <label for="onlineCheck">온라인 대전</label>
-    <input type="checkbox" id="onlineCheck" />
+    <span>접속 상태</span>
+    <input type="checkbox" id="onlineCheck" hidden checked />
     <span class="val" id="onlineStatus">꺼짐</span>
   </div>
 
@@ -608,6 +607,11 @@
   </div>
 
   <div class="side">
+  <fieldset id="modeOptions" style="border:1px solid #b8b6ad;border-radius:10px;padding:14px;margin:0 0 16px">
+    <legend>모드 · 여러 개 선택 가능</legend>
+    <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    <p style="font-size:12px">준비 중인 모드는 선택만 저장되며 게임에는 아직 적용되지 않습니다.</p>
+  </fieldset>
   <div class="room" id="roomPanel" hidden>
     <div class="room-head">
       <span class="room-where" id="roomWhere">로비</span>
@@ -657,7 +661,7 @@
       <input type="text" id="nickInput" maxlength="12" placeholder="닉네임" disabled />
     </div>
     <div class="chat-log" id="chatLog">
-      <div class="chat-empty" id="chatEmpty">온라인 대전을 켜면 대화할 수 있음</div>
+      <div class="chat-empty" id="chatEmpty">로비에 연결 중입니다</div>
     </div>
     <div class="chat-input-row">
       <input type="text" id="chatInput" maxlength="200" placeholder="메시지 입력" disabled />
@@ -703,6 +707,32 @@
   const ENVIRONMENT = resolveEnvironment(location);
 
   const STORAGE_PREFIX = ENVIRONMENT === 'production' ? 'wave-omok:' : 'omok-game:test:';
+  const MODE_OPTIONS = [['skill','스킬'],['wave','웨이브'],['3d','3D'],['fight','싸움'],['rps','가위바위보'],['disaster','자연재해'],['teams','n vs n'],['blind','블라인드'],['moving','판 움직임'],['multi-stone','돌 n개씩']];
+  let selectedModes = [];
+
+  function normalizeModes(value, strength) {
+    return MODE_OPTIONS.map(item => item[0]).filter(id => Array.isArray(value) ? value.includes(id) : id === 'wave' && strength > 0);
+  }
+
+  function renderModes() {
+    document.querySelectorAll('#modeChecks input').forEach(input => { input.checked = selectedModes.includes(input.value); });
+  }
+  for (const [id, label] of MODE_OPTIONS) {
+    const wrap = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox'; input.value = id;
+    wrap.append(input, document.createTextNode(' ' + label + (id === 'wave' ? '' : ' (준비 중)')));
+    document.getElementById('modeChecks').append(wrap);
+    input.addEventListener('change', () => {
+      selectedModes = [...document.querySelectorAll('#modeChecks input:checked')].map(item => item.value);
+      if (id === 'wave') {
+        const strength = input.checked ? 0.6 : 0;
+        warpSlider.value = strength * 100; warpVal.textContent = warpSlider.value + '%';
+        generateGrid(seed, strength); draw();
+      }
+      saveSession();
+    });
+  }
   const N = 15;
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
@@ -718,7 +748,7 @@
   let lastMove = null;
   let winLine = null;
   let seed = Date.now() % 100000;
-  let intensity = 0.6;
+  let intensity = 0;
   let moveHistory = [];
   let zoom = 1;
 
@@ -1262,6 +1292,7 @@
       id: String(Date.now()),
       name,
       seed,
+      modes: selectedModes,
       intensity,
       allowTangle: allowTangleCheck.checked
     });
@@ -1472,7 +1503,7 @@
     chatInput.disabled = !on;
     chatSendBtn.disabled = !on;
     nickInput.disabled = !on;
-    chatEmpty.textContent = on ? '아직 대화 없음' : '온라인 대전을 켜면 대화할 수 있음';
+    chatEmpty.textContent = on ? '아직 대화 없음' : '로비에 연결 중입니다';
   }
 
   function sendChat() {
@@ -1491,6 +1522,7 @@
 
   function sigOf(st) {
     return [
+      (st.modes || []).join(","),
       st.seed,
       Math.round(st.intensity * 100),
       st.allowTangle ? 1 : 0,
@@ -1501,6 +1533,7 @@
   function currentState() {
     return {
       seed,
+      modes: selectedModes,
       intensity,
       allowTangle: allowTangleCheck.checked,
       moves: moveHistory.map(m => [m.i, m.j])
@@ -1518,7 +1551,7 @@
       if (i < 0 || i >= N || j < 0 || j >= N) continue;
       moves.push([i, j]);
     }
-    return { seed: raw.seed, intensity: raw.intensity, allowTangle: !!raw.allowTangle, moves };
+    return { seed: raw.seed, modes: normalizeModes(raw.modes, raw.intensity), intensity: raw.intensity, allowTangle: !!raw.allowTangle, moves };
   }
 
   function pushState() {
@@ -1529,6 +1562,8 @@
   }
 
   function applyRemote(st) {
+    selectedModes = normalizeModes(st.modes, st.intensity);
+    renderModes();
     applyingRemote = true;
     try {
 
@@ -2131,6 +2166,7 @@
   function updateControlLock() {
 
     const locked = inPlay() || (online && currentRoom && match && match.state === 'ended');
+    document.getElementById("modeOptions").disabled = locked;
     warpSlider.disabled = locked;
     allowTangleCheck.disabled = locked;
     undoBtn.disabled = locked;
@@ -2319,6 +2355,7 @@
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify({
         seed,
+        modes: selectedModes,
         intensity,
         allowTangle: allowTangleCheck.checked,
         moves: moveHistory.map(m => [m.i, m.j])
@@ -2337,6 +2374,8 @@
     }
     if (!s || typeof s.seed !== 'number' || typeof s.intensity !== 'number') return false;
 
+    selectedModes = normalizeModes(s.modes, s.intensity);
+    renderModes();
     allowTangleCheck.checked = !!s.allowTangle;
     warpSlider.value = Math.round(s.intensity * 100);
     warpVal.textContent = warpSlider.value + '%';
@@ -2381,6 +2420,9 @@
 
   warpSlider.addEventListener('input', () => {
     const pct = Number(warpSlider.value);
+    selectedModes = selectedModes.filter(id => id !== "wave");
+    if (pct > 0) selectedModes.push("wave");
+    renderModes();
     warpVal.textContent = pct + '%';
     generateGrid(seed, pct / 100);
     draw();
@@ -2400,21 +2442,9 @@
 
   if (!restoreSession()) resetGame(false);
 
-  (function restoreOnline() {
-    const invited = new URLSearchParams(location.search).get('room');
-    let wasOnline = false;
-    try { wasOnline = sessionStorage.getItem(SESSION_ONLINE_KEY) === '1'; } catch (e) {  }
+  onlineCheck.checked = true;
+  connectOnline();
 
-    if (!invited && !wasOnline) return;
-
-    onlineCheck.checked = true;
-    if (wasOnline) {
-
-      connectOnline();
-    } else {
-      openNickModal();
-    }
-  })();
 })();
 </script>
 </body>
