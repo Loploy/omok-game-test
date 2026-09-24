@@ -1,6 +1,7 @@
 
 
 window.OMOK_UI_TEXT = {
+  boardView: { open: '판 크게 보기', close: '원래 화면' },
   account: {
     settingsBtn: '설정', settingsTitle: '설정', googleLoginBtn: 'Google 로그인', logoutBtn: '로그아웃',
     nicknameLabel: '닉네임', colorLabel: '기본 돌 색', profileSaveBtn: '저장', settingsCloseBtn: '닫기',

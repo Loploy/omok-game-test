@@ -28,72 +28,7 @@
   <div class="settings-actions"><button id="profileSaveBtn" type="button">저장</button><button id="settingsCloseBtn" type="button">닫기</button></div>
 </dialog>
 <div class="wrap">
-  <div class="main-col">
-  <header><h1 id="gameTitle"></h1></header>
-  <div class="turn">
-    <span class="dot" id="turnDot"></span>
-    <span id="turnText">흑 차례</span>
-  </div>
-
-  <div class="board-frame">
-    <div class="board-scroll" id="boardScroll">
-      <canvas id="board" width="800" height="800"></canvas>
-    </div>
-  </div>
-
-  <div class="zoom-row">
-    <div class="zoom-group">
-      <button id="zoomOutBtn" title="축소">−</button>
-      <span class="zoomVal" id="zoomVal">100%</span>
-      <button id="zoomInBtn" title="확대">+</button>
-    </div>
-    <button id="zoomResetBtn">원래 크기</button>
-    <button id="undoBtn" class="undo-btn">↩ 한 수 무르기</button>
-  </div>
-
-  <div class="warp-control">
-    <span>접속 상태</span>
-    <input type="checkbox" id="onlineCheck" hidden checked />
-    <span class="val" id="onlineStatus">꺼짐</span>
-  </div>
-
-  <div class="hud">
-    <div class="msg" id="msg"></div>
-    <div class="btns">
-      <button id="resetBtn">다시 시작 (같은 판)</button>
-      <button id="reshuffleBtn" class="primary">새 판</button>
-    </div>
-  </div>
-
-  <div class="save-row">
-    <button id="saveBoardBtn">＋ 이 판 저장</button>
-    <select id="savedList" aria-label="저장한 판 목록"></select>
-    <button id="loadBoardBtn">불러오기</button>
-    <button id="deleteBoardBtn" class="danger">삭제</button>
-  </div>
-  </div>
-
-  <div class="side">
-  <fieldset id="modeOptions" style="border:1px solid #b8b6ad;border-radius:10px;padding:14px;margin:0 0 16px">
-    <legend id="modeHeading"></legend>
-    <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
-    <section id="modeSettings" hidden>
-      <h3 id="settingsHeading" style="font-size:14px"></h3>
-      <div data-mode-settings="wave" hidden>
-        <strong id="waveHeading"></strong>
-  <div class="warp-control">
-    <label for="warpSlider" id="waveIntensityLabel"></label>
-    <input type="range" id="warpSlider" min="0" max="100" value="0" step="1" />
-    <span class="val" id="warpVal">0%</span>
-  </div>
-  <div class="warp-control">
-    <label for="allowTangleCheck" id="waveTangleLabel"></label>
-    <input type="checkbox" id="allowTangleCheck" />
-  </div>
-
-      </div>
-    </section>
-  </fieldset>
+  <aside class="left-col" aria-label="방과 모드">
   <div class="room" id="roomPanel" hidden>
     <div class="room-head">
       <span class="room-where" id="roomWhere">로비</span>
@@ -137,6 +72,73 @@
     <div class="room-msg" id="roomMsg"></div>
   </div>
 
+  <fieldset id="modeOptions" style="border:1px solid #b8b6ad;border-radius:10px;padding:14px;margin:0 0 16px">
+    <legend id="modeHeading"></legend>
+    <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    <section id="modeSettings" hidden>
+      <h3 id="settingsHeading" style="font-size:14px"></h3>
+      <div data-mode-settings="wave" hidden>
+        <strong id="waveHeading"></strong>
+  <div class="warp-control">
+    <label for="warpSlider" id="waveIntensityLabel"></label>
+    <input type="range" id="warpSlider" min="0" max="100" value="0" step="1" />
+    <span class="val" id="warpVal">0%</span>
+  </div>
+  <div class="warp-control">
+    <label for="allowTangleCheck" id="waveTangleLabel"></label>
+    <input type="checkbox" id="allowTangleCheck" />
+  </div>
+
+      </div>
+    </section>
+  </fieldset>
+  </aside>
+  <main class="main-col" id="boardView">
+  <header><h1 id="gameTitle"></h1><button id="boardFocusBtn" type="button" aria-pressed="false"></button></header>
+  <div class="turn">
+    <span class="dot" id="turnDot"></span>
+    <span id="turnText">흑 차례</span>
+  </div>
+
+  <div class="board-frame">
+    <div class="board-scroll" id="boardScroll">
+      <canvas id="board" width="800" height="800"></canvas>
+    </div>
+  </div>
+
+  <div class="zoom-row">
+    <div class="zoom-group">
+      <button id="zoomOutBtn" title="축소">−</button>
+      <span class="zoomVal" id="zoomVal">100%</span>
+      <button id="zoomInBtn" title="확대">+</button>
+    </div>
+    <button id="zoomResetBtn">원래 크기</button>
+    <button id="undoBtn" class="undo-btn">↩ 한 수 무르기</button>
+  </div>
+
+  <div class="warp-control connection-status">
+    <span>접속 상태</span>
+    <input type="checkbox" id="onlineCheck" hidden checked />
+    <span class="val" id="onlineStatus">꺼짐</span>
+  </div>
+
+  <div class="hud">
+    <div class="msg" id="msg"></div>
+    <div class="btns">
+      <button id="resetBtn">다시 시작 (같은 판)</button>
+      <button id="reshuffleBtn" class="primary">새 판</button>
+    </div>
+  </div>
+
+  <div class="save-row">
+    <button id="saveBoardBtn">＋ 이 판 저장</button>
+    <select id="savedList" aria-label="저장한 판 목록"></select>
+    <button id="loadBoardBtn">불러오기</button>
+    <button id="deleteBoardBtn" class="danger">삭제</button>
+  </div>
+  </main>
+
+  <aside class="chat-col" aria-label="채팅">
   <div class="chat">
     <div class="chat-title">
       <span>채팅</span>
@@ -160,7 +162,8 @@
       <div class="admin-msg" id="adminMsg"></div>
     </div>
   </div>
-  </div>
+  </aside>
+
 </div>
 
 <div class="modal-back" id="nickModal" hidden>
@@ -188,6 +191,7 @@
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
 <script src="online/account.js"></script>
+<script src="ui/layout.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

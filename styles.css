@@ -512,30 +512,6 @@
     min-height: 16px;
   }
 
-  @media (min-width: 1060px) {
-    .wrap {
-      max-width: 1100px;
-      display: flex;
-      align-items: flex-start;
-      gap: 22px;
-    }
-    .main-col {
-      flex: 1;
-      min-width: 0;
-    }
-    .side {
-      flex: 0 0 340px;
-      position: sticky;
-      top: 20px;
-    }
-    .chat {
-      margin-top: 0;
-      padding-top: 0;
-      border-top: none;
-    }
-    .chat-log { height: 46vh; }
-  }
-
 #settingsBtn { position: fixed; top: 12px; right: 12px; z-index: 30; }
 #settingsDialog { width: min(360px, calc(100vw - 48px)); border: 1px solid #c9c3b0; border-radius: 12px; padding: 24px; background: #faf8f1; color: #303753; }
 #settingsDialog::backdrop { background: rgba(0,0,0,.35); }
@@ -547,3 +523,48 @@
 #colorChoices { display:flex; flex-wrap:wrap; gap:12px; padding:8px 3px; }
 .color-choice { width:32px; height:32px; border-radius:50%; border:1px solid #777; padding:0; }
 .color-choice[aria-pressed="true"] { outline:3px solid #383e70; outline-offset:3px; }
+
+[hidden] { display: none !important; }
+.wrap { max-width: 1800px; display: grid; gap: 16px; padding: 58px 16px 16px; }
+.left-col, .main-col, .chat-col { min-width: 0; }
+.left-col { display: flex; flex-direction: column; gap: 12px; }
+.left-col .room { margin: 0; }
+.main-col header { align-items: center; }
+.main-col h1 { font-size: 30px; }
+.main-col .board-frame { width: 100%; margin: 0 auto; }
+.main-col .zoom-row, .main-col .hud, .main-col .save-row { margin-top: 8px; gap: 6px; }
+.main-col button { font-size: 12px; padding: 6px 9px; }
+.main-col .save-row { padding-top: 8px; }
+.main-col .connection-status { margin: 6px 0; font-size: 12px; }
+#modeOptions { min-width: 0; }
+#modeChecks { gap: 8px !important; }
+#modeChecks label { font-size: 12px; }
+#modeSettings .warp-control { flex-wrap: wrap; }
+#modeSettings input[type=range] { min-width: 80px; }
+.chat-col .chat { margin: 0; padding: 0; border: 0; }
+.chat-col .chat-log { height: 280px; }
+@media (min-width: 1000px) {
+  .wrap { height: 100dvh; grid-template-columns: minmax(250px, 290px) minmax(0, 1fr) minmax(230px, 290px); }
+  .left-col, .chat-col { min-height: 0; overflow: auto; }
+  .main-col { min-height: 0; overflow: auto; }
+  .main-col .board-frame { max-width: calc(100dvh - 290px); }
+  .main-col .turn { margin-bottom: 4px; }
+  .chat-col .chat { height: 100%; display: flex; flex-direction: column; }
+  .chat-col .chat-log { height: auto; flex: 1; min-height: 100px; }
+  .chat-title, .chat-input-row { flex-shrink: 0; }
+}
+@media (max-width: 999px) {
+  .wrap { max-width: 760px; }
+  .left-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .left-col { grid-template-columns: 1fr; }
+}
+
+body.board-focus { overflow: hidden; }
+body.board-focus .left-col, body.board-focus .chat-col, body.board-focus #settingsBtn { display: none; }
+body.board-focus #boardView { position: fixed; inset: 0; z-index: 100; background: #e9e6de; padding: 10px; overflow: auto; display: flex; flex-direction: column; align-items: center; }
+body.board-focus #boardView > header { width: 100%; flex-shrink: 0; }
+body.board-focus #boardView > .connection-status, body.board-focus #boardView > .hud, body.board-focus #boardView > .save-row { display: none; }
+body.board-focus #boardView .board-frame { width: min(calc(100vw - 20px), calc(100dvh - 120px)); max-width: none; flex-shrink: 0; }
+body.board-focus #boardView .zoom-row { flex-shrink: 0; }
