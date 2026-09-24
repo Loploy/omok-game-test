@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=layout-3">
+<link rel="stylesheet" href="styles.css?v=layout-4">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -58,6 +58,7 @@
       <button id="roomCopyBtn">링크 복사</button>
     </div>
 
+      <div hidden id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
     <div class="room-msg" id="roomMsg"></div>
   </div>
 
@@ -65,8 +66,7 @@
     <legend id="modeHeading"></legend>
     <div id="modeChecks" style="display:flex;flex-wrap:wrap;gap:12px"></div>
 
-  </fieldset>
-    <fieldset id="modeSettings" hidden>
+    <section id="modeSettings" hidden>
       <h3 id="settingsHeading" style="font-size:14px"></h3>
       <div data-mode-settings="wave" hidden>
         <strong id="waveHeading"></strong>
@@ -81,7 +81,8 @@
   </div>
 
       </div>
-    </fieldset>
+    </section>
+  </fieldset>
   </aside>
   <main class="main-col" id="boardView">
   <header><h1 id="gameTitle"></h1>  <div class="warp-control connection-status">
@@ -109,7 +110,7 @@
         <button id="matchOkBtn" class="primary" hidden>확인</button>
         <button id="readyBtn">준비완료</button>
       </div>
-      <div id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
+
       <div class="match-players" id="matchPlayers"></div>
     </div>
   <button id="boardFocusBtn" type="button" aria-pressed="false"></button>
@@ -187,7 +188,7 @@
 <script src="modes/wave.js"></script>
 <script src="core/board.js"></script>
 <script src="core/input.js"></script>
-<script src="core/storage.js?v=layout-3"></script>
+<script src="core/storage.js?v=layout-4"></script>
 <script src="online/connection.js"></script>
 <script src="online/chat.js"></script>
 <script src="online/sync.js"></script>
@@ -196,7 +197,7 @@
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
 <script src="online/account.js"></script>
-<script src="ui/layout.js?v=layout-3"></script>
+<script src="ui/layout.js?v=layout-4"></script>
 <script src="main.js"></script>
 </body>
 </html>
