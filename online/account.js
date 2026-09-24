@@ -118,7 +118,7 @@ async function saveAccountProfile() {
     if (revision !== accountRevision) return;
     accountProfile = profile;
     nickInput.value = profile.nickname;
-    recolorMyStones(profile.stoneColor);
+    await recolorMyStones(profile.stoneColor);
     publishNick();
     document.getElementById('accountMessage').textContent = UI_TEXT.account.saved;
     document.getElementById('settingsDialog').close();
@@ -174,7 +174,7 @@ function initializeAccount() {
 }
 
 function renderColorChoices() {
-  document.querySelectorAll('.color-choice').forEach(button => {
+  document.querySelectorAll('#colorChoices .color-choice').forEach(button => {
     const selected = button.dataset.color === document.getElementById('profileColor').value;
     button.setAttribute('aria-pressed', String(selected));
     button.disabled = !accountReady || accountBusy;

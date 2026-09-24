@@ -1,4 +1,28 @@
+let selectedMatchColor = null;
 
+function matchColor(id) {
+  const color = match?.ready?.[id]?.color;
+  return STONE_COLORS.includes(color) ? color : (match?.white === id ? 'white' : 'black');
+}
+
+function renderMatchColors() {
+  const container = document.getElementById('matchColorChoices');
+  container.replaceChildren();
+  container.hidden = !currentRoom || !match || !['idle', 'counting'].includes(match.state);
+  if (container.hidden) return;
+  for (const color of STONE_COLORS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'color-choice';
+    button.style.backgroundColor = color;
+    button.title = UI_TEXT.account.colors[color];
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-pressed', String(color === (isReady() ? matchColor(getMyId()) : (selectedMatchColor || accountProfile?.stoneColor || DEFAULT_STONE_COLOR))));
+    button.disabled = isReady();
+    button.addEventListener('click', () => { selectedMatchColor = color; renderMatchColors(); });
+    container.append(button);
+  }
+}
 
   function rememberSession() {
     try {
@@ -36,7 +60,7 @@
         return cur;
       }
       if (Object.keys(cur).length >= SEATS) return;
-      cur[me] = true;
+      cur[me] = { color: selectedMatchColor || accountProfile?.stoneColor || DEFAULT_STONE_COLOR };
       return cur;
     }, (err, committed, snap) => {
       if (err || !committed) return;
@@ -184,6 +208,7 @@
 
   function renderMatch() {
     updateHud();
+    renderMatchColors();
     const inRoom = !!currentRoom;
     matchPanel.hidden = !inRoom;
     if (!inRoom || !match) {
@@ -209,8 +234,8 @@
       const left = Math.max(0, CHOOSE_MS - (serverNow() - (match.chooseStart || 0)));
       const sec = Math.ceil(left / 1000);
       matchState.textContent = iChoose
-        ? '색을 고르세요 · ' + sec + '초'
-        : seatName(match.chooser) + ' 님이 색을 고르는 중 · ' + sec + '초';
+        ? '선공·후공 선택 · ' + sec + '초'
+        : seatName(match.chooser) + ' 님이 순서를 고르는 중 · ' + sec + '초';
       matchPlayers.textContent = '';
       startCountTimer();
       return;
@@ -218,14 +243,14 @@
 
     if (state === 'playing') {
       matchState.textContent = seatLeftTimer ? '상대 접속 끊김 — 기다리는 중' : '대국 중';
-      matchPlayers.textContent = '흑 ' + seatName(match.black) + ' · 백 ' + seatName(match.white);
+      matchPlayers.textContent = '선공 ' + seatName(match.black) + ' (' + UI_TEXT.account.colors[matchColor(match.black)] + ') · 후공 ' + seatName(match.white) + ' (' + UI_TEXT.account.colors[matchColor(match.white)] + ')';
       stopCountTimer();
       return;
     }
 
     if (state === 'ended') {
       matchState.textContent = match.result || '대국 종료';
-      matchPlayers.textContent = '흑 ' + seatName(match.black) + ' · 백 ' + seatName(match.white);
+      matchPlayers.textContent = '선공 ' + seatName(match.black) + ' (' + UI_TEXT.account.colors[matchColor(match.black)] + ') · 후공 ' + seatName(match.white) + ' (' + UI_TEXT.account.colors[matchColor(match.white)] + ')';
       stopCountTimer();
       return;
     }

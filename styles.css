@@ -568,3 +568,5 @@ body.board-focus #boardView > header { width: 100%; flex-shrink: 0; }
 body.board-focus #boardView > .connection-status, body.board-focus #boardView > .hud, body.board-focus #boardView > .save-row { display: none; }
 body.board-focus #boardView .board-frame { width: min(calc(100vw - 20px), calc(100dvh - 120px)); max-width: none; flex-shrink: 0; }
 body.board-focus #boardView .zoom-row { flex-shrink: 0; }
+
+#matchColorChoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

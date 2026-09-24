@@ -7,7 +7,7 @@
         modes: selectedModes,
         intensity,
         allowTangle: allowTangleCheck.checked,
-        moves: moveHistory.map(m => [m.i, m.j, m.player, m.color])
+        moves: moveHistory.map(m => [m.i, m.j, m.player, m.color, m.owner || ""])
       }));
     } catch (e) {  }
     pushState();
@@ -32,7 +32,7 @@
     resetGame(true);
 
     const restored = normalizeState(s);
-    for (const mv of restored.moves) placeStone(mv[0], mv[1], mv[2], mv[3]);
+    for (const mv of restored.moves) placeStone(mv[0], mv[1], mv[2], mv[3], mv[4], true);
     updateHud();
     draw();
     saveSession();

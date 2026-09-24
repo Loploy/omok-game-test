@@ -16,7 +16,7 @@
       modes: selectedModes,
       intensity,
       allowTangle: allowTangleCheck.checked,
-      moves: moveHistory.map(m => [m.i, m.j, m.player, m.color])
+      moves: moveHistory.map(m => [m.i, m.j, m.player, m.color, m.owner || ""])
     };
   }
 
@@ -31,7 +31,8 @@
       if (i < 0 || i >= N || j < 0 || j >= N) continue;
       const player = mv[2] === 1 || mv[2] === 2 || (typeof mv[2] === 'string' && mv[2].startsWith('user:') && mv[2].length <= 160) ? mv[2] : (moves.length % 2 + 1);
       const color = STONE_COLORS.includes(mv[3]) ? mv[3] : (player === 1 ? 'black' : 'white');
-      moves.push([i, j, player, color]);
+      const owner = typeof mv[4] === 'string' && mv[4].length <= 160 ? mv[4] : (typeof player === 'string' ? player.slice(5) : '');
+      moves.push([i, j, player, color, owner]);
     }
     return { seed: raw.seed, modes: normalizeModes(raw.modes, raw.intensity), intensity: raw.intensity, allowTangle: !!raw.allowTangle, moves };
   }
@@ -56,7 +57,7 @@
         generateGrid(st.seed, st.intensity);
       }
       resetGame(true);
-      for (const mv of st.moves) placeStone(mv[0], mv[1], mv[2], mv[3]);
+      for (const mv of st.moves) placeStone(mv[0], mv[1], mv[2], mv[3], mv[4], true);
       updateHud();
       draw();
       saveSession();

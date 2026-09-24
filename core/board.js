@@ -1,24 +1,31 @@
 
 const WIN_LENGTH = 5;
 
-function recolorMyStones(color) {
+async function recolorMyStones(color) {
   const me = getMyId();
-  const owner = 'user:' + me;
-  const hasSeats = currentRoom && match && (match.state === 'playing' || match.state === 'ended');
-  const seat = hasSeats ? (match.black === me ? 1 : match.white === me ? 2 : null) : null;
-  let changed = false;
-  for (const move of moveHistory) {
-    if ((move.player === owner || (seat !== null && move.player === seat)) && move.color !== color) {
-      move.color = color;
-      changed = true;
-    }
+  const seat = currentRoom && match && ['playing', 'ended'].includes(match.state)
+    ? (match.black === me ? 1 : match.white === me ? 2 : null) : null;
+
+  const recolor = moves => moves.map(move => {
+    const mine = move[4] === me || move[2] === 'user:' + me
+      || (!move[4] && seat !== null && move[2] === seat);
+    return mine ? [move[0], move[1], move[2], color, me] : move;
+  });
+  if (online && gameRef) {
+    const result = await gameRef.transaction(raw => {
+      const state = normalizeState(raw);
+      if (!state) return;
+      return { ...raw, moves: recolor(state.moves) };
+    });
+    if (result.committed) applyRemote(normalizeState(result.snapshot.val()));
+  } else {
+    const state = currentState();
+    state.moves = recolor(state.moves);
+    applyRemote(state);
   }
-  if (!changed) return;
-  if (winLine && board[winLine[0][0]][winLine[0][1]] === owner) {
-    msg.textContent = UI_TEXT.account.colors[color] + ' 승리!';
+  if (seat !== null && matchRef) {
+    await matchRef.child('ready/' + me).set({ color });
   }
-  draw();
-  saveSession();
 }
 
   function resetGame(keepGrid) {
@@ -36,8 +43,9 @@ function recolorMyStones(color) {
 
   function updateHud() {
     turnText.parentElement.hidden = !inPlay();
-    turnDot.className = 'dot ' + (turn === 1 ? 'black' : 'white');
-    turnText.textContent = (turn === 1 ? '흑' : '백') + ' 차례';
+    turnDot.className = 'dot';
+    turnDot.style.backgroundColor = inPlay() ? matchColor(turn === 1 ? match.black : match.white) : '';
+    turnText.textContent = (turn === 1 ? '선공' : '후공') + ' 차례';
   }
 
   function strokeSmoothPath(points, color, width) {
@@ -150,16 +158,21 @@ function recolorMyStones(color) {
     return null;
   }
 
-  function checkWin(i, j, player) {
+  function sameStoneGroup(i, j, player, color) {
+    if (typeof player === 'number') return board[i][j] === player;
+    return board[i][j] !== 0 && moveHistory.some(move => move.i === i && move.j === j && move.color === color);
+  }
+
+  function checkWin(i, j, player, color) {
     const dirs = [[0,1],[1,0],[1,1],[1,-1]];
     for (const [di, dj] of dirs) {
       const line = [[i, j]];
       let ci = i + di, cj = j + dj;
-      while (ci >= 0 && ci < N && cj >= 0 && cj < N && board[ci][cj] === player) {
+      while (ci >= 0 && ci < N && cj >= 0 && cj < N && sameStoneGroup(ci, cj, player, color)) {
         line.push([ci, cj]); ci += di; cj += dj;
       }
       ci = i - di; cj = j - dj;
-      while (ci >= 0 && ci < N && cj >= 0 && cj < N && board[ci][cj] === player) {
+      while (ci >= 0 && ci < N && cj >= 0 && cj < N && sameStoneGroup(ci, cj, player, color)) {
         line.unshift([ci, cj]); ci -= di; cj -= dj;
       }
       if (line.length >= WIN_LENGTH) return line;
@@ -167,12 +180,12 @@ function recolorMyStones(color) {
     return null;
   }
 
-  function placeStone(i, j, player = turn, color = player === 1 ? 'black' : 'white') {
-    if (gameOver || board[i][j] !== 0) return false;
+  function placeStone(i, j, player = turn, color = player === 1 ? 'black' : 'white', owner = '', replay = false) {
+    if ((!replay && gameOver) || board[i][j] !== 0) return false;
     board[i][j] = player;
     lastMove = [i, j];
-    moveHistory.push({ i, j, player, color });
-    const win = checkWin(i, j, player);
+    moveHistory.push({ i, j, player, color, owner });
+    const win = checkWin(i, j, player, color);
     if (win) {
       gameOver = true;
       winLine = win;
@@ -195,8 +208,8 @@ function recolorMyStones(color) {
     const node = findNearestNode(x, y);
     if (!node) return;
     const player = inPlay() ? turn : 'user:' + getMyId();
-    const color = accountProfile?.stoneColor || DEFAULT_STONE_COLOR;
-    if (!placeStone(node[0], node[1], player, color)) return;
+    const color = inPlay() ? matchColor(getMyId()) : (accountProfile?.stoneColor || DEFAULT_STONE_COLOR);
+    if (!placeStone(node[0], node[1], player, color, getMyId())) return;
     draw();
     saveSession();
     syncMatchEnd();
