@@ -602,3 +602,7 @@ body.board-focus #matchPanel .match-head > button,
 body.board-focus #matchPanel .match-players { display: none; }
 body.board-focus #boardView .board-actions { gap: 16px; }
 body.board-focus #matchState { white-space: nowrap; }
+
+.match-color-option { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 72px; }
+.match-color-option > span { font-size: 12px; max-width: 100%; overflow-wrap: anywhere; min-height: 18px; }
+.match-color-option .color-choice:disabled { opacity: .65; cursor: not-allowed; }

@@ -13,7 +13,7 @@ function renderMatchColors() {
   const dialog = document.getElementById('matchColorDialog');
   const active = currentRoom && match?.state === 'choosing' && isReady();
   if (!active) { if (dialog.open) dialog.close(); matchColorRenderKey = ''; document.getElementById('matchStartError').textContent = ''; return; }
-  const key = match.chooseStart + ':' + matchColor(getMyId());
+  const key = JSON.stringify([match.chooseStart, match.ready, nickMap]);
   if (key !== matchColorRenderKey) {
     matchColorRenderKey = key;
     const container = document.getElementById('matchColorChoices');
@@ -23,11 +23,18 @@ function renderMatchColors() {
       button.type = 'button';
       button.className = 'color-choice';
       button.style.backgroundColor = color;
-      button.title = UI_TEXT.account.colors[color];
+      const owner = readyList().find(id => matchColor(id) === color);
+      button.title = UI_TEXT.account.colors[color] + (owner ? ' · ' + seatName(owner) : '');
+      button.disabled = !!owner && owner !== getMyId();
       button.setAttribute('aria-label', button.title);
       button.setAttribute('aria-pressed', String(color === matchColor(getMyId())));
       button.addEventListener('click', () => chooseMatchColor(color));
-      container.append(button);
+      const choice = document.createElement('div');
+      choice.className = 'match-color-option';
+      const name = document.createElement('span');
+      name.textContent = owner ? seatName(owner) : '';
+      choice.append(button, name);
+      container.append(choice);
     }
   }
   document.getElementById('matchColorTime').textContent = Math.max(0, Math.ceil((CHOOSE_MS - (serverNow() - match.chooseStart)) / 1000)) + '초';
@@ -39,7 +46,8 @@ function chooseMatchColor(color) {
   const me = getMyId();
   matchRef.transaction(current => {
     if (current?.state !== 'choosing' || !current.ready?.[me]) return;
-    current.ready[me] = { color };
+    if (Object.entries(current.ready).some(([id, value]) => id !== me && value.color === color)) return;
+    current.ready[me] = { ...current.ready[me], color };
     return current;
   });
 }
@@ -94,28 +102,37 @@ function renderMatchIntro() {
   function toggleReady() {
     if (!matchRef) return;
     const me = getMyId();
-
-    matchRef.child('ready').transaction(cur => {
-      cur = cur || {};
-      if (cur[me]) {
-        delete cur[me];
-        return cur;
+    matchRef.transaction(current => {
+      current = current || { state: 'idle' };
+      if (!['idle', 'counting'].includes(current.state)) return;
+      const ready = { ...(current.ready || {}) };
+      if (ready[me]) delete ready[me];
+      else {
+        if (Object.keys(ready).length >= SEATS) return;
+        const order = Math.max(0, ...Object.values(ready).map(value => value.order || 0)) + 1;
+        const used = Object.values(ready).map(value => value.color);
+        const preferred = accountProfile?.stoneColor || DEFAULT_STONE_COLOR;
+        const color = used.includes(preferred) ? STONE_COLORS.find(value => !used.includes(value)) : preferred;
+        ready[me] = { color, order };
       }
-      if (Object.keys(cur).length >= SEATS) return;
-      cur[me] = { color: accountProfile?.stoneColor || DEFAULT_STONE_COLOR };
-      return cur;
-    }, (err, committed, snap) => {
-      if (err || !committed) return;
-      const now = snap.val() || {};
-      const n = Object.keys(now).length;
-      if (n >= SEATS) {
-
-        matchRef.update({ state: 'counting', countStart: serverNow() });
-      } else {
-
-        matchRef.update({ state: 'idle', countStart: null });
-      }
+      const full = Object.keys(ready).length === SEATS;
+      return { ...current, ready, state: full ? 'counting' : 'idle', countStart: full ? serverNow() : null };
     });
+  }
+
+  function orderedPlayers(ready) {
+    return Object.keys(ready || {}).sort((a, b) => (ready[a].order || 0) - (ready[b].order || 0) || a.localeCompare(b));
+  }
+
+  function normalizeMatchColors(ready) {
+    const used = new Set();
+    for (const id of orderedPlayers(ready)) {
+      const value = ready[id];
+      const color = STONE_COLORS.includes(value.color) && !used.has(value.color)
+        ? value.color : STONE_COLORS.find(candidate => !used.has(candidate));
+      ready[id] = { ...value, color };
+      used.add(color);
+    }
   }
 
   function checkCountdown() {
@@ -124,10 +141,11 @@ function renderMatchIntro() {
       matchRef.transaction(current => {
         if (current?.state !== 'counting' || serverNow() - current.countStart < COUNTDOWN_MS) return;
         if (Object.keys(current.ready || {}).length !== SEATS) return;
+        normalizeMatchColors(current.ready);
         return { ...current, state: 'choosing', chooseStart: serverNow(), countStart: null };
       });
     }
-    if (match.state === 'choosing' && serverNow() - match.chooseStart >= CHOOSE_MS) startRandomMatch();
+    if (match.state === 'choosing' && serverNow() - match.chooseStart >= CHOOSE_MS) startPreparedMatch();
   }
 
   async function transactMatchRoom(ref, update) {
@@ -145,20 +163,20 @@ function renderMatchIntro() {
     }
   }
 
-  async function startRandomMatch() {
+  async function startPreparedMatch() {
     if (!matchRef || matchOperationBusy) return;
     matchOperationBusy = true;
     const ref = matchRef;
-    const firstIndex = Math.floor(Math.random() * SEATS);
     try {
     const result = await transactMatchRoom(ref, room => {
       const current = room?.match;
       if (current?.state !== 'choosing' || serverNow() - current.chooseStart < CHOOSE_MS) return;
-      const players = Object.keys(current.ready || {});
+      const players = orderedPlayers(current.ready);
       if (players.length !== SEATS) return;
+      normalizeMatchColors(current.ready);
       if (room.game) room.game.moves = [];
       room.match = { ...current, state: 'playing', startedAt: serverNow(), turnStartedAt: serverNow() + MATCH_INTRO_MS, ply: 0, winner: null, result: null, chooseStart: null,
-        black: players[firstIndex], white: players[(firstIndex + 1) % SEATS] };
+        black: players[0], white: players[1] };
       return room;
     });
     if (result && !result.committed && match?.state === 'choosing') {

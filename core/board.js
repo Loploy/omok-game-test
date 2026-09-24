@@ -23,7 +23,7 @@ async function recolorMyStones(color) {
     applyRemote(state);
   }
   if (seat !== null && matchRef) {
-    await matchRef.child('ready/' + me).set({ color });
+    await matchRef.child('ready/' + me).update({ color });
   }
 }
 
