@@ -145,6 +145,7 @@
         match = {
           state: typeof raw.state === 'string' ? raw.state : 'idle',
           ready: raw.ready || {},
+          startedAt: typeof raw.startedAt === 'number' ? raw.startedAt : 0,
           countStart: typeof raw.countStart === 'number' ? raw.countStart : 0,
           chooser: typeof raw.chooser === 'string' ? raw.chooser : '',
           chooseStart: typeof raw.chooseStart === 'number' ? raw.chooseStart : 0,

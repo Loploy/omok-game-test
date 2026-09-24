@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=layout-4">
+<link rel="stylesheet" href="styles.css?v=layout-5">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -57,8 +57,6 @@
       <input type="text" id="roomInviteLink" readonly />
       <button id="roomCopyBtn">링크 복사</button>
     </div>
-
-      <div hidden id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
     <div class="room-msg" id="roomMsg"></div>
   </div>
 
@@ -171,6 +169,12 @@
 
 </div>
 
+<dialog id="matchColorDialog" aria-labelledby="matchColorTitle">
+  <h2 id="matchColorTitle">경기 돌 색 선택</h2>
+  <p id="matchColorTime"></p>
+  <div id="matchColorChoices" role="group" aria-label="경기 돌 색"></div>
+</dialog>
+<div id="matchIntro" role="status" hidden></div>
 <div id="savedMenu" hidden aria-label="저장한 판 목록"></div>
 <div class="modal-back" id="nickModal" hidden>
   <div class="modal">
@@ -186,18 +190,18 @@
 <script src="ui-text.js"></script>
 <script src="game_state.js"></script>
 <script src="modes/wave.js"></script>
-<script src="core/board.js"></script>
+<script src="core/board.js?v=layout-5"></script>
 <script src="core/input.js"></script>
-<script src="core/storage.js?v=layout-4"></script>
+<script src="core/storage.js?v=layout-5"></script>
 <script src="online/connection.js"></script>
 <script src="online/chat.js"></script>
-<script src="online/sync.js"></script>
+<script src="online/sync.js?v=layout-5"></script>
 <script src="online/room.js"></script>
-<script src="online/match.js"></script>
+<script src="online/match.js?v=layout-5"></script>
 <script src="ui/panels.js"></script>
 <script src="core/session.js"></script>
 <script src="online/account.js"></script>
-<script src="ui/layout.js?v=layout-4"></script>
+<script src="ui/layout.js?v=layout-5"></script>
 <script src="main.js"></script>
 </body>
 </html>

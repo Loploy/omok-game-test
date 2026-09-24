@@ -45,7 +45,7 @@ async function recolorMyStones(color) {
     turnText.parentElement.hidden = !inPlay();
     turnDot.className = 'dot';
     turnDot.style.backgroundColor = inPlay() ? matchColor(turn === 1 ? match.black : match.white) : '';
-    turnText.textContent = (turn === 1 ? '선공' : '후공') + ' 차례';
+    turnText.textContent = (inPlay() ? seatName(turn === 1 ? match.black : match.white) : '') + ' 차례';
   }
 
   function strokeSmoothPath(points, color, width) {

@@ -1,4 +1,8 @@
-let selectedMatchColor = null;
+
+const MATCH_INTRO_MS = 3000;
+let matchColorRenderKey = '';
+let matchIntroTimer = null;
+let shownMatchIntro = '';
 
 function matchColor(id) {
   const color = match?.ready?.[id]?.color;
@@ -6,22 +10,60 @@ function matchColor(id) {
 }
 
 function renderMatchColors() {
-  const container = document.getElementById('matchColorChoices');
-  container.replaceChildren();
-  container.hidden = !currentRoom || !match || !['idle', 'counting'].includes(match.state);
-  if (container.hidden) return;
-  for (const color of STONE_COLORS) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'color-choice';
-    button.style.backgroundColor = color;
-    button.title = UI_TEXT.account.colors[color];
-    button.setAttribute('aria-label', button.title);
-    button.setAttribute('aria-pressed', String(color === (isReady() ? matchColor(getMyId()) : (selectedMatchColor || accountProfile?.stoneColor || DEFAULT_STONE_COLOR))));
-    button.disabled = isReady();
-    button.addEventListener('click', () => { selectedMatchColor = color; renderMatchColors(); });
-    container.append(button);
+  const dialog = document.getElementById('matchColorDialog');
+  const active = currentRoom && match?.state === 'choosing' && isReady();
+  if (!active) { if (dialog.open) dialog.close(); matchColorRenderKey = ''; return; }
+  const key = match.chooseStart + ':' + matchColor(getMyId());
+  if (key !== matchColorRenderKey) {
+    matchColorRenderKey = key;
+    const container = document.getElementById('matchColorChoices');
+    container.replaceChildren();
+    for (const color of STONE_COLORS) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'color-choice';
+      button.style.backgroundColor = color;
+      button.title = UI_TEXT.account.colors[color];
+      button.setAttribute('aria-label', button.title);
+      button.setAttribute('aria-pressed', String(color === matchColor(getMyId())));
+      button.addEventListener('click', () => chooseMatchColor(color));
+      container.append(button);
+    }
   }
+  document.getElementById('matchColorTime').textContent = Math.max(0, Math.ceil((CHOOSE_MS - (serverNow() - match.chooseStart)) / 1000)) + '초';
+  if (!dialog.open) dialog.showModal();
+}
+
+function chooseMatchColor(color) {
+  if (!matchRef || !STONE_COLORS.includes(color)) return;
+  const me = getMyId();
+  matchRef.transaction(current => {
+    if (current?.state !== 'choosing' || !current.ready?.[me]) return;
+    current.ready[me] = { color };
+    return current;
+  });
+}
+
+function renderMatchIntro() {
+  const panel = document.getElementById('matchIntro');
+  if (!inPlay()) { panel.hidden = true; shownMatchIntro = ''; clearTimeout(matchIntroTimer); return; }
+  const remaining = (match.startedAt || 0) + MATCH_INTRO_MS - serverNow();
+  if (remaining <= 0) { panel.hidden = true; return; }
+  const key = currentRoom + ':' + match.startedAt;
+  if (shownMatchIntro === key) return;
+  shownMatchIntro = key;
+  panel.replaceChildren();
+  for (const [id, order] of [[match.black, '선공'], [match.white, '후공']]) {
+    const row = document.createElement('div');
+    const dot = document.createElement('span');
+    dot.className = 'intro-stone';
+    dot.style.backgroundColor = matchColor(id);
+    row.append(dot, document.createTextNode(seatName(id) + ' · ' + UI_TEXT.account.colors[matchColor(id)] + ' · ' + order));
+    panel.append(row);
+  }
+  panel.hidden = false;
+  clearTimeout(matchIntroTimer);
+  matchIntroTimer = setTimeout(() => { panel.hidden = true; }, remaining);
 }
 
   function rememberSession() {
@@ -60,7 +102,7 @@ function renderMatchColors() {
         return cur;
       }
       if (Object.keys(cur).length >= SEATS) return;
-      cur[me] = { color: selectedMatchColor || accountProfile?.stoneColor || DEFAULT_STONE_COLOR };
+      cur[me] = { color: accountProfile?.stoneColor || DEFAULT_STONE_COLOR };
       return cur;
     }, (err, committed, snap) => {
       if (err || !committed) return;
@@ -78,53 +120,28 @@ function renderMatchColors() {
 
   function checkCountdown() {
     if (!matchRef || !match) return;
-
-    if (match.state === 'counting') {
-      const left = COUNTDOWN_MS - (serverNow() - (match.countStart || 0));
-      if (left > 0) return;
-
-      const list = readyList();
-      if (list.length < SEATS) { matchRef.update({ state: 'idle', countStart: null }); return; }
-      const prev = match.lastChooser;
-      const next = (prev && list.indexOf(prev) !== -1)
-        ? list[(list.indexOf(prev) + 1) % list.length]
-        : list[Math.floor(Math.random() * list.length)];
-      matchRef.update({
-        state: 'choosing',
-        countStart: null,
-        chooser: next,
-        chooseStart: serverNow()
+    if (match.state === 'counting' && serverNow() - match.countStart >= COUNTDOWN_MS) {
+      matchRef.transaction(current => {
+        if (current?.state !== 'counting' || serverNow() - current.countStart < COUNTDOWN_MS) return;
+        if (Object.keys(current.ready || {}).length !== SEATS) return;
+        return { ...current, state: 'choosing', chooseStart: serverNow(), countStart: null };
       });
-      return;
     }
-
-    if (match.state === 'choosing') {
-      const left = CHOOSE_MS - (serverNow() - (match.chooseStart || 0));
-
-      if (left <= 0) pickColor(1, true);
-    }
+    if (match.state === 'choosing' && serverNow() - match.chooseStart >= CHOOSE_MS) startRandomMatch();
   }
 
-  function pickColor(color, auto) {
-    if (!matchRef || !match || match.state !== 'choosing') return;
-    const chooser = match.chooser;
-    if (!auto && chooser !== getMyId()) return;
-
-    const list = readyList();
-    const other = list.filter(id => id !== chooser)[0] || '';
-    if (!chooser || !other) {
-      matchRef.update({ state: 'idle', chooser: null, chooseStart: null });
-      return;
-    }
-
-    if (gameRef) gameRef.child('moves').remove().catch(() => {  });
-
-    matchRef.update({
-      state: 'playing',
-      chooseStart: null,
-      black: color === 1 ? chooser : other,
-      white: color === 1 ? other : chooser,
-      lastChooser: chooser
+  function startRandomMatch() {
+    if (!matchRef) return;
+    const firstIndex = Math.floor(Math.random() * SEATS);
+    matchRef.parent.transaction(room => {
+      const current = room?.match;
+      if (current?.state !== 'choosing' || serverNow() - current.chooseStart < CHOOSE_MS) return;
+      const players = Object.keys(current.ready || {});
+      if (players.length !== SEATS) return;
+      if (room.game) room.game.moves = [];
+      room.match = { ...current, state: 'playing', startedAt: serverNow(), chooseStart: null,
+        black: players[firstIndex], white: players[(firstIndex + 1) % SEATS] };
+      return room;
     });
   }
 
@@ -184,6 +201,7 @@ function renderMatchColors() {
   function canPlace() {
     if (currentRoom && match && match.state !== 'idle' && match.state !== 'playing') return false;
     if (!inPlay()) return true;
+    if (serverNow() < (match.startedAt || 0) + MATCH_INTRO_MS) return false;
     const me = getMyId();
     if (me !== match.black && me !== match.white) return false;
     return turn === (me === match.black ? 1 : 2);
@@ -209,6 +227,7 @@ function renderMatchColors() {
   function renderMatch() {
     updateHud();
     renderMatchColors();
+    renderMatchIntro();
     const inRoom = !!currentRoom;
     matchPanel.hidden = !inRoom;
     if (!inRoom || !match) {
@@ -222,9 +241,8 @@ function renderMatchColors() {
     const mine = isReady();
     const state = match.state;
 
-    const iChoose = state === 'choosing' && match.chooser === getMyId();
-    pickBlackBtn.hidden = !iChoose;
-    pickWhiteBtn.hidden = !iChoose;
+    pickBlackBtn.hidden = true;
+    pickWhiteBtn.hidden = true;
 
     matchOkBtn.hidden = state !== 'ended';
 
@@ -233,9 +251,7 @@ function renderMatchColors() {
     if (state === 'choosing') {
       const left = Math.max(0, CHOOSE_MS - (serverNow() - (match.chooseStart || 0)));
       const sec = Math.ceil(left / 1000);
-      matchState.textContent = iChoose
-        ? '선공·후공 선택 · ' + sec + '초'
-        : seatName(match.chooser) + ' 님이 순서를 고르는 중 · ' + sec + '초';
+      matchState.textContent = '경기 색 선택 · ' + sec + '초';
       matchPlayers.textContent = '';
       startCountTimer();
       return;
@@ -294,8 +310,7 @@ function renderMatchColors() {
   }
 
   readyBtn.addEventListener('click', toggleReady);
-  pickBlackBtn.addEventListener('click', () => pickColor(1));
-  pickWhiteBtn.addEventListener('click', () => pickColor(2));
+  document.getElementById('matchColorDialog').addEventListener('cancel', event => event.preventDefault());
   matchOkBtn.addEventListener('click', () => {
     resetMatch();
 
