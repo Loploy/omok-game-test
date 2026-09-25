@@ -63,15 +63,14 @@ async function applyAccountUser(user) {
     if (revision !== accountRevision) return;
     accountProfile = profile;
     accountReady = true;
-    nickInput.value = profile.nickname;
+    nickDisplay.textContent = profile.nickname;
   } catch (error) {
     if (revision !== accountRevision) return;
-    nickInput.value = user?.displayName?.slice(0, PROFILE_NICK_MAX_LENGTH) || '플레이어';
+    nickDisplay.textContent = user?.displayName?.slice(0, PROFILE_NICK_MAX_LENGTH) || '플레이어';
     showAccountError(error);
   }
   if (revision !== accountRevision) return;
 
-  nickInput.readOnly = true;
   onlineCheck.checked = true;
   connectOnline();
   renderAccount();
@@ -114,7 +113,7 @@ async function saveAccountProfile() {
     }
     if (revision !== accountRevision) return;
     accountProfile = profile;
-    nickInput.value = profile.nickname;
+    nickDisplay.textContent = profile.nickname;
     await recolorMyStones(profile.stoneColor);
     publishNick();
     document.getElementById('accountMessage').textContent = UI_TEXT.account.saved;

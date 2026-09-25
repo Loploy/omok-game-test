@@ -80,7 +80,7 @@
   const chatEmpty = document.getElementById('chatEmpty');
   const chatInput = document.getElementById('chatInput');
   const chatSendBtn = document.getElementById('chatSendBtn');
-  const nickInput = document.getElementById('nickInput');
+  const nickDisplay = document.getElementById('nickDisplay');
   const nickModal = document.getElementById('nickModal');
   const nickModalInput = document.getElementById('nickModalInput');
   const nickOkBtn = document.getElementById('nickOkBtn');

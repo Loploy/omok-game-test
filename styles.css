@@ -218,19 +218,14 @@
     color: var(--ink);
     margin-bottom: 8px;
   }
-  .chat-title input[type=text] {
-    flex: 1;
+  #nickDisplay {
     min-width: 0;
-    font-family: inherit;
+    margin-left: auto;
     font-size: 12px;
     font-weight: 400;
-    padding: 5px 8px;
-    border-radius: 6px;
-    border: 1px solid #c9c3b0;
-    background: #fffdf9;
-    color: var(--text);
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
   }
-  .chat-title input[type=text]:disabled { background: #f0ede5; color: #9a958a; }
 
   .chat-msg {
     display: flex;

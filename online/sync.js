@@ -110,8 +110,8 @@
       updateRoomUI();
 
       const myName = nickMap[getMyId()];
-      if (myName && myName !== nickInput.value) {
-        nickInput.value = myName;
+      if (myName && myName !== nickDisplay.textContent) {
+        nickDisplay.textContent = myName;
         try { if (!accountUser) localStorage.setItem(NICK_KEY, myName); } catch (e) {  }
       }
     }, () => {  });

@@ -2,7 +2,7 @@
 
   function openNickModal() {
     loadNick();
-    nickModalInput.value = nickInput.value;
+    nickModalInput.value = nickDisplay.textContent;
     nickModal.hidden = false;
     nickModalInput.focus();
     nickModalInput.select();
@@ -14,8 +14,8 @@
   }
 
   function confirmNickModal() {
-    nickInput.value = nickModalInput.value.trim().slice(0, 12);
-    if (!nickInput.value) nickInput.value = getNick();
+    nickDisplay.textContent = nickModalInput.value.trim().slice(0, 12);
+    if (!nickDisplay.textContent) nickDisplay.textContent = getNick();
     try { localStorage.setItem(NICK_KEY, getNick()); } catch (e) {  }
     nickModal.hidden = true;
     connectOnline();

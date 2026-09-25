@@ -18,14 +18,14 @@
   }
 
   function getNick() {
-    const v = nickInput.value.trim();
+    const v = nickDisplay.textContent.trim();
     return v || ('손님' + getMyId().slice(0, 4));
   }
 
   function loadNick() {
     let saved = null;
     try { saved = localStorage.getItem(NICK_KEY); } catch (e) {  }
-    nickInput.value = saved || ('손님' + getMyId().slice(0, 4));
+    nickDisplay.textContent = saved || ('손님' + getMyId().slice(0, 4));
   }
 
   function displayName(from, fallback) {
@@ -46,13 +46,7 @@
 
   window.addEventListener('storage', e => {
     if (accountUser || e.key !== NICK_KEY || !e.newValue) return;
-    nickInput.value = e.newValue.slice(0, 12);
-  });
-
-  nickInput.addEventListener('change', () => {
-    nickInput.value = nickInput.value.trim().slice(0, 12);
-    try { localStorage.setItem(NICK_KEY, getNick()); } catch (e) {  }
-    publishNick();
+    nickDisplay.textContent = e.newValue.slice(0, 12);
   });
 
   let lastChatFrom = null;
@@ -94,7 +88,6 @@
   function setChatEnabled(on) {
     chatInput.disabled = !on;
     chatSendBtn.disabled = !on;
-    nickInput.disabled = !on;
     chatEmpty.textContent = on ? '아직 대화 없음' : '로비에 연결 중입니다';
   }
 
