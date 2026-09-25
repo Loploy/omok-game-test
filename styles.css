@@ -610,3 +610,9 @@ body.board-focus #matchState { white-space: nowrap; }
 body.board-focus #boardView > .board-actions { order: -2; width: 100%; margin: 0 0 6px; justify-content: space-between; }
 body.board-focus #boardView > .turn { order: -1; margin-bottom: 6px; flex-shrink: 0; }
 body.board-focus #boardView > .zoom-row { width: 100%; }
+
+#roomSettingsDialog { width: min(480px, 90vw); max-height: 85dvh; overflow: auto; padding: 24px; border: 1px solid #c9c3b0; border-radius: 12px; background: var(--paper); }
+#roomSettingsDialog::backdrop { background: #0005; }
+#roomSettingsDialog > label { display: block; margin: 12px 0; }
+.room-member-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.room-member-row > span { flex: 1; overflow-wrap: anywhere; }

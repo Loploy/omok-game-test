@@ -75,6 +75,7 @@
     const db = ensureDb();
     if (!db) return;
 
+    attachRoomHost();
     gameRef = db.ref(placePath(GAME_PATH));
     gameHandler = gameRef.on('value', snap => {
       const st = normalizeState(snap.val());
@@ -115,9 +116,7 @@
       }
     }, () => {  });
 
-    const meRef = usersRef.child(getMyId());
-    meRef.onDisconnect().remove();
-    publishNick();
+    restorePresence();
 
     chatRef = db.ref(placePath(CHAT_PATH));
     chatQuery = chatRef.limitToLast(CHAT_LIMIT);
@@ -168,6 +167,7 @@
   }
 
   function detachPlace() {
+    detachRoomHost();
     if (usersRef) {
       const meRef = usersRef.child(getMyId());
       meRef.onDisconnect().cancel();
@@ -225,6 +225,7 @@
     connHandler = connRef.on('value', snap => {
       if (!online) return;
       setOnlineStatus(snap.val() ? '연결됨' : '끊김 — 재접속 중…');
+      if (snap.val()) restorePresence();
     });
 
     roomListRef = db.ref(ROOM_LIST_PATH);

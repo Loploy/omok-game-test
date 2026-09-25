@@ -41,7 +41,7 @@
 
   function publishNick() {
     if (!online || !usersRef) return;
-    usersRef.child(getMyId()).set({ name: getNick() }).catch(() => {  });
+    usersRef.child(getMyId()).update({ name: getNick() }).catch(() => {  });
   }
 
   window.addEventListener('storage', e => {

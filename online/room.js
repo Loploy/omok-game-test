@@ -17,7 +17,7 @@
       const handler = ref.on('value', snap => {
         roomCounts[code] = snap.exists() ? Object.keys(snap.val()).length : 0;
         renderRoomList();
-        removeIfEmpty(code);
+
       }, () => {  });
       roomWatchers[code] = { ref: ref, handler: handler };
     }
@@ -29,18 +29,6 @@
     }
     roomWatchers = {};
     roomCounts = {};
-  }
-
-  function removeIfEmpty(code) {
-    if (!online || currentRoom) return;
-    if (roomCounts[code] !== 0) return;
-    const info = rooms[code];
-
-    if (!info || Date.now() - info.created < ROOM_GRACE_MS) return;
-    const db = ensureDb();
-    if (!db) return;
-    db.ref(ROOM_LIST_PATH + '/' + code).remove().catch(() => {  });
-    db.ref(ROOMS_PATH + '/' + code).remove().catch(() => {  });
   }
 
   function clampMax(v) {
@@ -65,10 +53,10 @@
     const inRoom = !!currentRoom;
     roomBrowse.hidden = inRoom;
     roomInvite.hidden = !inRoom;
-    roomMaxRow.hidden = !inRoom;
+    roomMaxRow.hidden = !isRoomHost();
     roomLeaveBtn.hidden = !inRoom;
     if (inRoom) {
-      const info = rooms[currentRoom];
+      const info = roomMeta || rooms[currentRoom];
       const title = info ? info.title : '이름 없는 방';
       const max = info ? info.max : ROOM_MAX_DEFAULT;
 
@@ -122,6 +110,10 @@
       try { await forfeitMatch(getMyId(), '퇴장 포기'); }
       catch (error) { roomMsg.textContent = '포기 처리 실패. 다시 시도해 주세요'; return; }
     }
+    if (currentRoom) {
+      try { await leaveManagedRoom(currentRoom); }
+      catch (error) { roomMsg.textContent = '퇴장 처리 실패'; return; }
+    }
     detachPlace();
     currentRoom = code;
     roomMsg.textContent = '';
@@ -131,56 +123,35 @@
     renderRoomList();
   }
 
-  function enterRoom(code) {
+  async function enterRoom(code) {
     code = (code || '').toUpperCase().trim();
-    if (code.length !== CODE_LEN) {
-      roomMsg.textContent = '코드는 ' + CODE_LEN + '글자임';
-      return;
-    }
-    const db = ensureDb();
-    if (!db) return;
-    db.ref(ROOM_LIST_PATH + '/' + code).once('value')
-      .then(snap => {
-        if (!snap.exists()) {
-          roomMsg.textContent = '없는 방임';
-          return null;
-        }
-        const max = clampMax((snap.val() || {}).max);
-
-        return db.ref(ROOMS_PATH + '/' + code + '/' + USERS_PATH).once('value')
-          .then(us => {
-            const count = us.exists() ? Object.keys(us.val()).length : 0;
-            if (count >= max) {
-              roomMsg.textContent = '방이 꽉 참 (' + count + '/' + max + ')';
-              return;
-            }
-            roomCodeInput.value = '';
-            goPlace(code);
-          });
-      })
-      .catch(() => { roomMsg.textContent = '확인 실패'; });
+    if (code.length !== CODE_LEN) { roomMsg.textContent = '코드는 ' + CODE_LEN + '글자임'; return; }
+    if (currentRoom === code) return;
+    try {
+      await joinManagedRoom(code);
+      roomCodeInput.value = '';
+      await goPlace(code);
+    } catch (error) { roomMsg.textContent = error.message || '입장 실패'; }
   }
 
-  function createRoom() {
-    const db = ensureDb();
-    if (!db) return;
+  async function createRoom() {
+    if (!ensureDb()) return;
     const title = roomTitleInput.value.trim().slice(0, 20) || '이름 없는 방';
     const max = clampMax(roomMaxNew.value);
-    roomMaxNew.value = max;
-
-    const tryOnce = (left) => {
-      if (left <= 0) { roomMsg.textContent = '방을 만들지 못함'; return; }
+    for (let attempt = 0; attempt < 5; attempt++) {
       const code = makeRoomCode();
-      const ref = db.ref(ROOM_LIST_PATH + '/' + code);
-      ref.once('value').then(snap => {
-        if (snap.exists()) { tryOnce(left - 1); return; }
-        return ref.set({ title: title, created: Date.now(), max: max }).then(() => {
-          roomTitleInput.value = '';
-          goPlace(code);
+      try {
+        const result = await changeRoom(code, room => room ? undefined : {
+          meta: { title, max, created: serverNow(), host: getMyId(), public: true, locked: false, allowControls: true }
         });
-      }).catch(() => { roomMsg.textContent = '방을 만들지 못함'; });
-    };
-    tryOnce(5);
+        if (!result.committed) continue;
+        await joinManagedRoom(code);
+        roomTitleInput.value = '';
+        await goPlace(code);
+        return;
+      } catch (error) { roomMsg.textContent = '방 생성 실패'; return; }
+    }
+    roomMsg.textContent = '방 코드를 만들지 못함';
   }
 
   roomCreateBtn.addEventListener('click', createRoom);
@@ -192,17 +163,6 @@
     if (e.key === 'Enter') { e.preventDefault(); createRoom(); }
   });
   roomLeaveBtn.addEventListener('click', () => goPlace(null));
-
-  roomMaxInput.addEventListener('change', () => {
-    if (!currentRoom) return;
-    const max = clampMax(roomMaxInput.value);
-    roomMaxInput.value = max;
-    const db = ensureDb();
-    if (!db) return;
-    db.ref(ROOM_LIST_PATH + '/' + currentRoom + '/max').set(max)
-      .then(() => { roomMsg.textContent = '최대 인원 ' + max + '명으로 바꿈'; })
-      .catch(() => { roomMsg.textContent = '바꾸지 못함'; });
-  });
 
   roomCopyBtn.addEventListener('click', () => {
     roomInviteLink.select();

@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=focus-fit-13">
+<link rel="stylesheet" href="styles.css?v=room-host-1">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -32,6 +32,7 @@
   <div class="room" id="roomPanel" hidden>
     <div class="room-head">
       <span class="room-where" id="roomWhere">로비</span>
+      <button id="roomSettingsBtn" hidden>방 설정</button>
       <button id="roomLeaveBtn" hidden>나가기</button>
     </div>
 
@@ -46,11 +47,6 @@
         <button id="roomJoinBtn">참가</button>
       </div>
       <div class="room-list" id="roomList"></div>
-    </div>
-
-    <div class="room-row" id="roomMaxRow" hidden>
-      <label for="roomMaxInput">최대 인원</label>
-      <input type="number" id="roomMaxInput" min="2" max="20" />
     </div>
 
     <div class="room-row" id="roomInvite" hidden>
@@ -170,6 +166,18 @@
 
 </div>
 
+<dialog id="roomSettingsDialog" aria-labelledby="roomSettingsTitle">
+  <h2 id="roomSettingsTitle">방 설정</h2>
+  <label><input type="checkbox" id="roomPublic"> 공개 방</label>
+  <label><input type="checkbox" id="roomLocked"> 입장 잠금</label>
+  <label><input type="checkbox" id="roomAllowControls"> 참가자의 모드·판 조작 허용</label>
+    <div class="room-row" id="roomMaxRow" hidden>
+      <label for="roomMaxInput">최대 인원</label>
+      <input type="number" id="roomMaxInput" min="2" max="20" />
+    </div>
+  <div id="roomSettingsMembers"></div>
+  <button id="roomSettingsClose">닫기</button>
+</dialog>
 <dialog id="matchColorDialog" aria-labelledby="matchColorTitle">
   <h2 id="matchColorTitle">경기 돌 색 선택</h2>
   <p id="matchColorTime"></p>
@@ -190,23 +198,24 @@
   </div>
 </div>
 
-<script src="ui-text.js?v=match-cache-9"></script>
-<script src="constants.js?v=match-cache-9"></script>
-<script src="game_state.js?v=prepare-lock-12"></script>
-<script src="modes/wave.js?v=match-cache-9"></script>
-<script src="core/board.js?v=prepare-lock-12"></script>
-<script src="core/input.js?v=match-cache-9"></script>
-<script src="core/storage.js?v=prepare-lock-12"></script>
-<script src="online/match_timing.js?v=focus-fit-13"></script>
-<script src="online/connection.js?v=match-cache-9"></script>
-<script src="online/chat.js?v=match-cache-9"></script>
-<script src="online/sync.js?v=match-cache-9"></script>
-<script src="online/room.js?v=match-cache-9"></script>
-<script src="online/match.js?v=prepare-lock-12"></script>
-<script src="ui/panels.js?v=match-cache-9"></script>
-<script src="core/session.js?v=match-cache-9"></script>
-<script src="online/account.js?v=match-cache-9"></script>
-<script src="ui/layout.js?v=focus-fit-13"></script>
-<script src="main.js?v=prepare-lock-12"></script>
+<script src="ui-text.js?v=room-host-1"></script>
+<script src="constants.js?v=room-host-1"></script>
+<script src="game_state.js?v=room-host-1"></script>
+<script src="modes/wave.js?v=room-host-1"></script>
+<script src="core/board.js?v=room-host-1"></script>
+<script src="core/input.js?v=room-host-1"></script>
+<script src="core/storage.js?v=room-host-1"></script>
+<script src="online/match_timing.js?v=room-host-1"></script>
+<script src="online/connection.js?v=room-host-1"></script>
+<script src="online/chat.js?v=room-host-1"></script>
+<script src="online/sync.js?v=room-host-1"></script>
+<script src="online/room.js?v=room-host-1"></script>
+<script src="online/match.js?v=room-host-1"></script>
+<script src="online/room_host.js?v=room-host-1"></script>
+<script src="ui/panels.js?v=room-host-1"></script>
+<script src="core/session.js?v=room-host-1"></script>
+<script src="online/account.js?v=room-host-1"></script>
+<script src="ui/layout.js?v=room-host-1"></script>
+<script src="main.js?v=room-host-1"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@ const STONE_COLORS = ['black', 'white', 'red', 'orange', 'yellow', 'green', 'blu
 const DEFAULT_STONE_COLOR = STONE_COLORS[0];
 const PROFILE_NICK_MAX_LENGTH = 12;
 
+const HOST_RECONNECT_GRACE_MS = 20000;
 const CHAT_LIMIT = 50;
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LEN = 4;

@@ -259,7 +259,9 @@ function renderMatchIntro() {
   }
 
   function canEditBoardControls() {
-    if (!online || !currentRoom || !match) return true;
+    if (!online || !currentRoom) return true;
+    if (!roomMeta || (roomMeta.allowControls === false && !isRoomHost())) return false;
+    if (!match) return true;
     if (['playing', 'ended'].includes(match.state)) return false;
     const preparing = readyList().length > 0 || ['counting', 'choosing'].includes(match.state);
     return !preparing || isReady();
