@@ -148,6 +148,7 @@ function renderRoomSettings() {
   for (const [id, value] of [['roomPublic', roomMeta.public !== false], ['roomLocked', !!roomMeta.locked], ['roomAllowControls', roomMeta.allowControls !== false]]) document.getElementById(id).checked = value;
   if (document.activeElement !== roomMaxInput) roomMaxInput.value = clampMax(roomMeta.max);
   const list = document.getElementById('roomSettingsMembers');
+  const scrollTop = list.scrollTop;
   list.replaceChildren();
   for (const id of orderedMembers(roomMembers)) {
     const row = document.createElement('div');
@@ -183,6 +184,7 @@ function renderRoomSettings() {
     }
     list.append(row);
   }
+  list.scrollTop = scrollTop;
 }
 document.getElementById('roomSettingsBtn').addEventListener('click', () => {
   if (isRoomHost()) { renderRoomSettings(); document.getElementById('roomSettingsDialog').showModal(); }

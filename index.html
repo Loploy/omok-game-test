@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-<link rel="stylesheet" href="styles.css?v=room-host-1">
+<link rel="stylesheet" href="styles.css?v=room-settings-2">
 </head>
 <body>
 <button id="settingsBtn" type="button" aria-haspopup="dialog">설정</button>
@@ -168,14 +168,14 @@
 
 <dialog id="roomSettingsDialog" aria-labelledby="roomSettingsTitle">
   <h2 id="roomSettingsTitle">방 설정</h2>
-  <label><input type="checkbox" id="roomPublic"> 공개 방</label>
-  <label><input type="checkbox" id="roomLocked"> 입장 잠금</label>
-  <label><input type="checkbox" id="roomAllowControls"> 참가자의 모드·판 조작 허용</label>
+  <label class="room-switch-row"><span>공개</span><input class="room-switch reverse" type="checkbox" role="switch" id="roomPublic" aria-label="공개 방"><span>비공개</span></label>
+  <label class="room-switch-row"><span>입장 허용</span><input class="room-switch" type="checkbox" role="switch" id="roomLocked" aria-label="입장 잠금"><span>입장 잠금</span></label>
+  <label class="room-switch-row"><span>참가자 조작 허용</span><input class="room-switch reverse" type="checkbox" role="switch" id="roomAllowControls" aria-label="참가자의 모드·판 조작 허용"><span>조작 불허</span></label>
     <div class="room-row" id="roomMaxRow" hidden>
       <label for="roomMaxInput">최대 인원</label>
       <input type="number" id="roomMaxInput" min="2" max="20" />
     </div>
-  <div id="roomSettingsMembers"></div>
+  <div id="roomSettingsMembers" role="region" aria-label="참가자 목록" tabindex="0"></div>
   <button id="roomSettingsClose">닫기</button>
 </dialog>
 <dialog id="matchColorDialog" aria-labelledby="matchColorTitle">
@@ -211,7 +211,7 @@
 <script src="online/sync.js?v=room-host-1"></script>
 <script src="online/room.js?v=room-host-1"></script>
 <script src="online/match.js?v=room-host-1"></script>
-<script src="online/room_host.js?v=room-host-1"></script>
+<script src="online/room_host.js?v=room-settings-2"></script>
 <script src="ui/panels.js?v=room-host-1"></script>
 <script src="core/session.js?v=room-host-1"></script>
 <script src="online/account.js?v=room-host-1"></script>
