@@ -39,7 +39,7 @@ document.addEventListener('keydown', event => {
 
 function fitBoardToPanel() {
   const frame = boardView.querySelector('.board-frame');
-  if (boardFocusActive || window.innerWidth <= 900) { frame.style.width = ''; return; }
+  if (!boardFocusActive && window.innerWidth <= 900) { frame.style.width = ''; return; }
   let controlsHeight = 0;
   for (const child of boardView.children) {
     if (child === frame) continue;
@@ -47,7 +47,12 @@ function fitBoardToPanel() {
     if (style.display === 'none') continue;
     controlsHeight += child.getBoundingClientRect().height + parseFloat(style.marginTop || 0) + parseFloat(style.marginBottom || 0);
   }
-  frame.style.width = Math.max(160, Math.min(boardView.clientWidth, boardView.clientHeight - controlsHeight - 4)) + 'px';
+  const panelStyle = getComputedStyle(boardView);
+  const horizontalPadding = parseFloat(panelStyle.paddingLeft) + parseFloat(panelStyle.paddingRight);
+  const verticalPadding = parseFloat(panelStyle.paddingTop) + parseFloat(panelStyle.paddingBottom);
+
+  const available = Math.min(boardView.clientWidth - horizontalPadding, boardView.clientHeight - verticalPadding - controlsHeight - 4);
+  frame.style.width = Math.max(boardFocusActive ? 20 : 160, available) + 'px';
 }
 const boardLayoutObserver = new ResizeObserver(() => requestAnimationFrame(fitBoardToPanel));
 boardLayoutObserver.observe(boardView);
